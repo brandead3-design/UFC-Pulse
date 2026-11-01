@@ -57,8 +57,8 @@ jobs:
                   applicationId = "com.mma.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 19
-                  versionName = "18.1-BranDEAD-Pro"
+                  versionCode = 20
+                  versionName = "18.2-BranDEAD-Pro"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -280,7 +280,6 @@ jobs:
               }
           }
 
-          // --- PULSE AI v2 ENGINE ---
           object PulseAiEngine {
               private fun parseWL(rec: String): Pair<Int, Int> {
                   val p = rec.split("-").mapNotNull { it.trim().takeWhile { c -> c.isDigit() }.toIntOrNull() }
@@ -376,7 +375,6 @@ jobs:
               }
           }
 
-          // --- FACE-CENTERED AVATAR LOADER ---
           object FaceImageLoader {
               private val cache = object : LruCache<String, ImageBitmap>(250) {}
               private val urlHints = mutableMapOf<String, String>()
@@ -473,7 +471,6 @@ jobs:
               }
           }
 
-          // --- ECG-ONLY PULSING LOGO (LOWERCASE lerp FIX) ---
           @Composable
           fun AnimatedMmaPulseLogo() {
               val inf = rememberInfiniteTransition(label = "ecg_line_pulse")
@@ -516,7 +513,6 @@ jobs:
                           pts.drop(1).forEach { lineTo(it.x, it.y) }
                       }
                       drawPath(path, color = Color(0xFFFF1744).copy(alpha = ecgGlow * 0.55f), style = Stroke(width = 4f + (ecgGlow * 7f), cap = StrokeCap.Round, join = StrokeJoin.Round))
-                      // Fixed Lerp to lowercase lerp
                       drawPath(path, color = lerp(Color(0xFFFF1744), Color(0xFFFFD700), ecgGlow * 0.35f), style = Stroke(width = 3.5f + (ecgGlow * 2f), cap = StrokeCap.Round, join = StrokeJoin.Round))
 
                       val segCount = pts.size - 1
@@ -536,7 +532,6 @@ jobs:
               }
           }
 
-          // --- VERIFIED FIGHTER DATABASE & MULTI-API REPOSITORY ---
           object MmaRepository {
               private val VERIFIED_STARS = listOf(
                   Fighter("3022677", "Conor McGregor", "The Notorious", "Lightweight / Welterweight", "LW", "22-6-0", "Ireland", "Former 2-Div Champ", false),
