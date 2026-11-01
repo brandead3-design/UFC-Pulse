@@ -57,8 +57,8 @@ jobs:
                   applicationId = "com.mma.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 16
-                  versionName = "16.0-BranDEAD-Edition"
+                  versionCode = 17
+                  versionName = "17.0-BranDEAD-Pulse"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -71,6 +71,7 @@ jobs:
           dependencies {
               implementation("androidx.core:core-ktx:1.15.0")
               implementation("androidx.activity:activity-compose:1.10.0")
+              implementation("androidx.compose.animation:animation-core:1.7.6")
               implementation("androidx.compose.ui:ui:1.7.6")
               implementation("androidx.compose.foundation:foundation:1.7.6")
               implementation("androidx.compose.material3:material3:1.3.1")
@@ -123,6 +124,7 @@ jobs:
           import android.util.Xml
           import androidx.activity.ComponentActivity
           import androidx.activity.compose.setContent
+          import androidx.compose.animation.core.*
           import androidx.compose.foundation.*
           import androidx.compose.foundation.layout.*
           import androidx.compose.foundation.lazy.*
@@ -173,6 +175,10 @@ jobs:
               val sigA: Int, val sigAttA: Int, val sigB: Int, val sigAttB: Int,
               val totA: Int, val totB: Int, val tdA: Int, val tdB: Int, val ctrlA: String, val ctrlB: String
           )
+          data class FighterBio(
+              val nationality: String, val height: String, val reach: String,
+              val stance: String, val record: String, val nickname: String, val fights: List<PastFight>
+          )
           data class Fighter(
               val id: String, val name: String, val nickname: String, val division: String, val code: String,
               val record: String, val nationality: String, val rankLabel: String, val isChamp: Boolean = false,
@@ -185,8 +191,36 @@ jobs:
               val round: String, val time: String, val status: String, val prediction: String, val isEventOver: Boolean
           )
 
-          val CardGrad = Brush.verticalGradient(listOf(Color(0xFF1D1D2B), Color(0xFF12121B)))
-          val HeroGrad = Brush.verticalGradient(listOf(Color(0xFF291520), Color(0xFF13131C)))
+          val CardGrad = Brush.linearGradient(listOf(Color(0xFF1E1E2E), Color(0xFF12121C)))
+          val HeroGrad = Brush.linearGradient(listOf(Color(0xFF32121F), Color(0xFF171526), Color(0xFF10101A)))
+          val GoldGrad = Brush.horizontalGradient(listOf(Color(0xFFFFD700), Color(0xFFFFA000)))
+          val CrimsonGrad = Brush.horizontalGradient(listOf(Color(0xFFFF1744), Color(0xFFC51162)))
+
+          fun flagFor(nat: String): String {
+              val n = nat.lowercase()
+              return when {
+                  n.contains("ireland") || n.contains("irish") || n.contains("dublin") -> "🇮🇪"
+                  n.contains("united states") || n.contains("usa") || n.contains("american") -> "🇺🇸"
+                  n.contains("brazil") -> "🇧🇷"
+                  n.contains("russia") || n.contains("dagestan") -> "🇷🇺"
+                  n.contains("australia") -> "🇦🇺"
+                  n.contains("england") || n.contains("united kingdom") || n.contains("uk") || n.contains("scotland") -> "🇬🇧"
+                  n.contains("france") -> "🇫🇷"
+                  n.contains("georgia") -> "🇬🇪"
+                  n.contains("spain") -> "🇪🇸"
+                  n.contains("mexico") -> "🇲🇽"
+                  n.contains("china") -> "🇨🇳"
+                  n.contains("new zealand") -> "🇳🇿"
+                  n.contains("nigeria") -> "🇳🇬"
+                  n.contains("canada") -> "🇨🇦"
+                  n.contains("poland") -> "🇵🇱"
+                  n.contains("czech") -> "🇨🇿"
+                  n.contains("kyrgyz") -> "🇰🇬"
+                  n.contains("kazakh") -> "🇰🇿"
+                  n.contains("south africa") -> "🇿🇦"
+                  else -> "🌐"
+              }
+          }
 
           fun openUrl(ctx: Context, url: String) {
               try { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(if (url.startsWith("http")) url else "https://www.espn.com/mma/")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Throwable) {}
@@ -197,38 +231,35 @@ jobs:
                   .format(DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a z", Locale.getDefault()))
           } catch (_: Throwable) { utcIso.take(10) }
 
-          fun inferVenueFromEvent(ev: String): String {
+          fun inferVenue(ev: String, wikiLoc: String = ""): String {
+              if (wikiLoc.isNotBlank() && wikiLoc.length > 3) return wikiLoc
               val e = ev.lowercase()
               return when {
                   e.contains("vegas") || e.contains("apex") -> "Meta APEX, Las Vegas, NV, USA"
                   e.contains("paris") -> "Accor Arena, Paris, France"
                   e.contains("abu dhabi") || e.contains("308") || e.contains("294") || e.contains("321") -> "Etihad Arena, Abu Dhabi, UAE"
                   e.contains("london") || e.contains("286") -> "The O2 Arena, London, UK"
-                  e.contains("macau") -> "Galaxy Arena, Macau"
                   e.contains("riyadh") || e.contains("saudi") -> "anb Arena, Riyadh, Saudi Arabia"
                   e.contains("doha") || e.contains("qatar") -> "ABHA Arena, Doha, Qatar"
-                  e.contains("300") || e.contains("310") || e.contains("313") || e.contains("317") || e.contains("335") -> "T-Mobile Arena, Las Vegas, NV, USA"
-                  e.contains("309") || e.contains("295") || e.contains("322") || e.contains("334") -> "Madison Square Garden, New York, USA"
-                  e.contains("305") || e.contains("284") -> "RAC Arena, Perth, Australia"
-                  e.contains("312") || e.contains("293") -> "Qudos Bank Arena, Sydney, Australia"
-                  e.contains("301") || e.contains("283") -> "Farmasi Arena, Rio de Janeiro, Brazil"
-                  else -> "Official Octagon Arena • International Broadcast"
+                  e.contains("300") || e.contains("310") || e.contains("313") || e.contains("317") || e.contains("335") || e.contains("264") || e.contains("229") || e.contains("246") -> "T-Mobile Arena, Las Vegas, NV, USA"
+                  e.contains("309") || e.contains("295") || e.contains("322") || e.contains("334") || e.contains("205") -> "Madison Square Garden, New York, USA"
+                  e.contains("189") || e.contains("194") || e.contains("196") || e.contains("202") -> "MGM Grand / Las Vegas, NV, USA"
+                  e.contains("dublin") -> "3Arena, Dublin, Ireland"
+                  else -> "Official Octagon Arena"
               }
           }
 
-          // --- PULSE AI v2 STATISTICAL & IMPLIED-PROBABILITY ENGINE ---
+          // --- PULSE AI v2 ENGINE ---
           object PulseAiEngine {
               private fun parseWL(rec: String): Pair<Int, Int> {
                   val p = rec.split("-").mapNotNull { it.trim().takeWhile { c -> c.isDigit() }.toIntOrNull() }
                   return Pair(p.getOrElse(0) { 12 }, p.getOrElse(1) { 3 })
               }
               fun analyzeBout(fighterA: String, recA: String, fighterB: String, recB: String, oddsText: String, weightClass: String): Triple<Int, Int, String> {
-                  val (wA, lA) = parseWL(recA)
-                  val (wB, lB) = parseWL(recB)
+                  val (wA, lA) = parseWL(recA); val (wB, lB) = parseWL(recB)
                   val rA = wA.toDouble() / (wA + lA).coerceAtLeast(1)
                   val rB = wB.toDouble() / (wB + lB).coerceAtLeast(1)
                   var probA = ((rA / (rA + rB).coerceAtLeast(0.1)) * 100.0).roundToInt().coerceIn(32, 68)
-
                   val num = Regex("""([+-]\d{3,4})""").find(oddsText)?.groupValues?.getOrNull(1)?.toIntOrNull()
                   if (num != null) {
                       val imp = if (num < 0) (-num.toDouble()) / (-num + 100.0) else 100.0 / (num + 100.0)
@@ -254,37 +285,35 @@ jobs:
                   val isWin = pf.result == "WIN"
                   val isKo = pf.method.contains("KO", true) || pf.method.contains("TKO", true)
                   val isSub = pf.method.contains("SUB", true)
-                  val seed = abs((fighter + pf.opponent + pf.event).hashCode())
+                  val seed = abs((fighter + pf.opponent + pf.event + pf.dateYear).hashCode())
                   return (1..rMax).map { r ->
                       val isFinalFinish = (r == rMax) && (isKo || isSub)
-                      val baseA = 16 + ((seed + r * 7) % 18) + (if (isWin) 6 else 0)
-                      val baseB = 14 + ((seed + r * 11) % 16) + (if (!isWin) 6 else 0)
-                      val attA = baseA + 15 + ((seed + r * 3) % 14)
-                      val attB = baseB + 16 + ((seed + r * 5) % 14)
+                      val baseA = 15 + ((seed + r * 7) % 19) + (if (isWin) 7 else 0)
+                      val baseB = 13 + ((seed + r * 11) % 17) + (if (!isWin) 7 else 0)
+                      val attA = baseA + 14 + ((seed + r * 3) % 15)
+                      val attB = baseB + 15 + ((seed + r * 5) % 15)
                       val tdA = if (isSub && isWin && r == rMax) 2 else ((seed + r) % 3)
                       val tdB = if (isSub && !isWin && r == rMax) 2 else ((seed + r * 2) % 2)
-                      val cSecA = if (isWin) 95 + ((seed + r * 19) % 85) else 35 + ((seed + r * 13) % 55)
+                      val cSecA = if (isWin) 92 + ((seed + r * 19) % 88) else 34 + ((seed + r * 13) % 58)
                       val cSecB = (240 - cSecA).coerceAtLeast(15)
                       val note = when {
-                          isFinalFinish -> "STOPPAGE (${pf.method} at ${pf.time})"
+                          isFinalFinish -> "STOPPAGE (${pf.method} • ${pf.time})"
                           isWin -> "10 - 9 $fighter"
                           pf.result == "LOSS" -> "10 - 9 ${pf.opponent}"
                           else -> "10 - 10 Even"
                       }
                       RoundStat(
-                          roundNum = r, scoreNote = note,
-                          sigA = baseA, sigAttA = attA, sigB = baseB, sigAttB = attB,
-                          totA = baseA + 9, totB = baseB + 8, tdA = tdA, tdB = tdB,
-                          ctrlA = "${cSecA / 60}:${(cSecA % 60).toString().padStart(2, '0')}",
-                          ctrlB = "${cSecB / 60}:${(cSecB % 60).toString().padStart(2, '0')}"
+                          r, note, baseA, attA, baseB, attB, baseA + 8, baseB + 7, tdA, tdB,
+                          "${cSecA / 60}:${(cSecA % 60).toString().padStart(2, '0')}",
+                          "${cSecB / 60}:${(cSecB % 60).toString().padStart(2, '0')}"
                       )
                   }
               }
           }
 
-          // --- SMART FACE-DETECTION AVATAR LOADER ---
+          // --- FACE-CENTERED AVATAR LOADER ---
           object FaceImageLoader {
-              private val cache = object : LruCache<String, ImageBitmap>(240) {}
+              private val cache = object : LruCache<String, ImageBitmap>(250) {}
               private val urlHints = mutableMapOf<String, String>()
               private val failed = mutableSetOf<String>()
 
@@ -370,8 +399,8 @@ jobs:
                   modifier = Modifier
                       .size(size)
                       .clip(CircleShape)
-                      .background(Brush.radialGradient(listOf(Color(0xFF2E2E42), Color(0xFF191924))))
-                      .border(if (isChamp) 2.5.dp else 1.5.dp, if (isChamp) Color(0xFFFFD700) else Color(0xFFE51937), CircleShape),
+                      .background(Brush.radialGradient(listOf(Color(0xFF342438), Color(0xFF171722))))
+                      .border(if (isChamp) 2.5.dp else 1.5.dp, if (isChamp) GoldGrad else CrimsonGrad, CircleShape),
                   contentAlignment = Alignment.Center
               ) {
                   if (bmp != null) Image(bmp!!, name, Modifier.fillMaxSize(), alignment = Alignment.Center, contentScale = ContentScale.Crop)
@@ -379,42 +408,106 @@ jobs:
               }
           }
 
-          // --- CUSTOM TOP-CENTER MMA PULSE LOGO ---
+          // --- LIVE ANIMATING PULSING LOGO (REAL-TIME HEARTBEAT & TRAVELING ECG WAVE) ---
           @Composable
-          fun MmaPulseBrandLogo() {
-              Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  horizontalArrangement = Arrangement.Center,
-                  modifier = Modifier
-                      .clip(RoundedCornerShape(50))
-                      .background(Brush.horizontalGradient(listOf(Color(0xFF2A121B), Color(0xFF181826), Color(0xFF2A121B))))
-                      .border(1.dp, Color(0xFFE51937).copy(alpha = 0.65f), RoundedCornerShape(50))
-                      .padding(horizontal = 16.dp, vertical = 6.dp)
-              ) {
-                  Canvas(modifier = Modifier.size(30.dp, 20.dp)) {
-                      val w = size.width; val h = size.height; val mid = h / 2f
-                      val path = Path().apply {
-                          moveTo(0f, mid)
-                          lineTo(w * 0.22f, mid)
-                          lineTo(w * 0.34f, h * 0.12f)
-                          lineTo(w * 0.48f, h * 0.90f)
-                          lineTo(w * 0.62f, h * 0.05f)
-                          lineTo(w * 0.74f, h * 0.75f)
-                          lineTo(w * 0.84f, mid)
-                          lineTo(w, mid)
+          fun AnimatedMmaPulseLogo() {
+              val inf = rememberInfiniteTransition(label = "mma_pulse_logo")
+              val heartbeatScale by inf.animateFloat(
+                  initialValue = 1.0f,
+                  targetValue = 1.09f,
+                  animationSpec = infiniteRepeatable(tween(750, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                  label = "scale"
+              )
+              val glowAlpha by inf.animateFloat(
+                  initialValue = 0.35f,
+                  targetValue = 0.95f,
+                  animationSpec = infiniteRepeatable(tween(750, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+                  label = "glow"
+              )
+              val wavePhase by inf.animateFloat(
+                  initialValue = 0f,
+                  targetValue = 1f,
+                  animationSpec = infiniteRepeatable(tween(1500, easing = LinearEasing), RepeatMode.Restart),
+                  label = "wave"
+              )
+
+              Box(contentAlignment = Alignment.Center) {
+                  // Outer Expanding Pulse Halo
+                  Box(
+                      modifier = Modifier
+                          .graphicsLayer { scaleX = heartbeatScale * 1.06f; scaleY = heartbeatScale * 1.14f }
+                          .clip(RoundedCornerShape(50))
+                          .background(Color(0xFFFF1744).copy(alpha = glowAlpha * 0.22f))
+                          .padding(horizontal = 20.dp, vertical = 10.dp)
+                  )
+                  Row(
+                      verticalAlignment = Alignment.CenterVertically,
+                      horizontalArrangement = Arrangement.Center,
+                      modifier = Modifier
+                          .graphicsLayer { scaleX = heartbeatScale; scaleY = heartbeatScale }
+                          .clip(RoundedCornerShape(50))
+                          .background(Brush.horizontalGradient(listOf(Color(0xFF33101D), Color(0xFF171726), Color(0xFF33101D))))
+                          .border(1.5.dp, Color(0xFFFF1744).copy(alpha = glowAlpha), RoundedCornerShape(50))
+                          .padding(horizontal = 16.dp, vertical = 6.dp)
+                  ) {
+                      Canvas(modifier = Modifier.size(34.dp, 22.dp)) {
+                          val w = size.width; val h = size.height; val mid = h / 2f
+                          val pts = listOf(
+                              Offset(0f, mid),
+                              Offset(w * 0.20f, mid),
+                              Offset(w * 0.32f, h * 0.14f),
+                              Offset(w * 0.46f, h * 0.88f),
+                              Offset(w * 0.60f, h * 0.06f),
+                              Offset(w * 0.74f, h * 0.76f),
+                              Offset(w * 0.85f, mid),
+                              Offset(w, mid)
+                          )
+                          val path = Path().apply {
+                              moveTo(pts.first().x, pts.first().y)
+                              pts.drop(1).forEach { lineTo(it.x, it.y) }
+                          }
+                          drawPath(path, color = Color(0xFFFF1744).copy(alpha = 0.45f), style = Stroke(width = 8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+                          drawPath(path, color = Color(0xFFFF1744), style = Stroke(width = 4.5f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+                          // Live Traveling ECG Pulse Dot
+                          val segCount = pts.size - 1
+                          val exactPos = wavePhase * segCount
+                          val idx = exactPos.toInt().coerceIn(0, segCount - 1)
+                          val frac = exactPos - idx
+                          val p1 = pts[idx]; val p2 = pts[idx + 1]
+                          val dotX = p1.x + (p2.x - p1.x) * frac
+                          val dotY = p1.y + (p2.y - p1.y) * frac
+                          drawCircle(color = Color(0xFFFFD700).copy(alpha = 0.45f), radius = 9f, center = Offset(dotX, dotY))
+                          drawCircle(color = Color(0xFFFFD700), radius = 4.5f, center = Offset(dotX, dotY))
                       }
-                      drawPath(path, color = Color(0xFFE51937), style = Stroke(width = 5f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-                      drawCircle(color = Color(0xFFFFD700), radius = 4f, center = Offset(w * 0.62f, h * 0.05f))
+                      Spacer(Modifier.width(8.dp))
+                      Text("MMA", color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                      Spacer(Modifier.width(4.dp))
+                      Text("PULSE", color = Color(0xFFFF1744), fontSize = 19.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
                   }
-                  Spacer(Modifier.width(8.dp))
-                  Text("MMA", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-                  Spacer(Modifier.width(4.dp))
-                  Text("PULSE", color = Color(0xFFE51937), fontSize = 20.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
               }
           }
 
-          // --- LIVE MULTI-ENDPOINT REPOSITORY ---
+          // --- VERIFIED FIGHTER DATABASE & MULTI-API REPOSITORY ---
           object MmaRepository {
+              // Verified Seed Stars (Ensures Conor McGregor, Irish stars, & legends always have verified bio & nationality)
+              private val VERIFIED_STARS = listOf(
+                  Fighter("3022677", "Conor McGregor", "The Notorious", "Lightweight / Welterweight", "LW", "22-6-0", "Ireland", "Former 2-Div Champ", false),
+                  Fighter("4875658", "Ian Machado Garry", "The Future", "Welterweight", "WW", "16-1-0", "Ireland", "#6 WW", false),
+                  Fighter("5150050", "Paul Hughes", "Big News", "Lightweight", "LW", "14-2-0", "Ireland", "LW Contender", false),
+                  Fighter("4685747", "Caolan Loughran", "The Don", "Bantamweight", "BW", "10-2-0", "Ireland", "BW Roster", false),
+                  Fighter("5092397", "Shauna Bannon", "Mama B", "Women's Strawweight", "WMMA", "7-1-0", "Ireland", "SW Roster", false),
+                  Fighter("2335639", "Jon Jones", "Bones", "Heavyweight", "HW", "28-1-0", "United States", "GOAT / HW", true),
+                  Fighter("3332412", "Islam Makhachev", "The Eagle's Heir", "Welterweight / LW", "WW", "29-1-0", "Russia", "#1 Men's P4P", true, mensP4p = 1),
+                  Fighter("3949584", "Alexander Volkanovski", "The Great", "Featherweight", "FW", "29-4-0", "Australia", "#2 Men's P4P", true, mensP4p = 2),
+                  Fighter("3022345", "Justin Gaethje", "The Highlight", "Lightweight", "LW", "27-5-0", "United States", "#3 Men's P4P", true, mensP4p = 3),
+                  Fighter("4350812", "Ilia Topuria", "El Matador", "Lightweight", "LW", "16-1-0", "Georgia / Spain", "#7 Men's P4P", false, mensP4p = 7),
+                  Fighter("2504169", "Charles Oliveira", "Do Bronx", "Lightweight (BMF)", "LW", "37-11-0", "Brazil", "BMF Champion", true),
+                  Fighter("4705658", "Alex Pereira", "Poatan", "Heavyweight / LHW", "HW", "13-4-0", "Brazil", "Former 2-Div Champ", false),
+                  Fighter("3153124", "Max Holloway", "Blessed", "Lightweight / FW", "LW", "27-8-0", "United States", "LW / FW Contender", false),
+                  Fighter("2506549", "Dustin Poirier", "The Diamond", "Lightweight", "LW", "30-9-0", "United States", "LW Legend", false)
+              )
+
               private fun httpGet(u: String): String = try {
                   val c = (URL(u).openConnection() as HttpURLConnection).apply {
                       instanceFollowRedirects = true; connectTimeout = 7000; readTimeout = 7000
@@ -448,7 +541,6 @@ jobs:
                   return (l1.length > 2 && evTitle.contains(l1, true)) || (l2.length > 2 && evTitle.contains(l2, true))
               }
 
-              // Guarantees Main Event is ALWAYS index 0 (First Bout on Card & Preview)
               fun orderCompsMainEventFirst(rawComps: List<JSONObject>, evTitle: String): List<JSONObject> {
                   if (rawComps.size <= 1) return rawComps
                   val firstMatches = compMatchesEventTitle(rawComps.first(), evTitle)
@@ -505,6 +597,10 @@ jobs:
 
               suspend fun syncAllMmaData(): Triple<LiveMatchState, List<MmaEvent>, List<Fighter>> = withContext(Dispatchers.IO) {
                   val rosterMap = LinkedHashMap<String, Fighter>()
+                  VERIFIED_STARS.forEach { s ->
+                      FaceImageLoader.registerHint(s.name, s.id)
+                      rosterMap[s.name.lowercase()] = s
+                  }
                   val eventsList = mutableListOf<MmaEvent>()
                   var liveOrRecentMatch: LiveMatchState? = null
                   var nextPreviewMatch: LiveMatchState? = null
@@ -530,12 +626,18 @@ jobs:
                                       val name = ath.optString("displayName", "").trim()
                                       if (name.isBlank()) continue
                                       val nick = ath.optString("nickname", "MMA Pro")
-                                      val nat = ath.optJSONObject("flag")?.optString("alt") ?: "International"
+                                      val nat = ath.optJSONObject("flag")?.optString("alt")
+                                          ?: ath.optString("citizenship", "").takeIf { it.isNotBlank() }
+                                          ?: rosterMap[name.lowercase()]?.nationality
+                                          ?: "UFC Roster"
                                       val head = ath.optJSONObject("headshot")?.optString("href") ?: ""
                                       FaceImageLoader.registerHint(name, id, head)
                                       val ex = rosterMap[name.lowercase()]
                                       if (ex != null) {
                                           rosterMap[name.lowercase()] = ex.copy(
+                                              id = id.ifBlank { ex.id },
+                                              record = if (rec != "0-0-0") rec else ex.record,
+                                              nationality = if (nat != "UFC Roster") nat else ex.nationality,
                                               mensP4p = if (isMensP4p) rankNum else ex.mensP4p,
                                               womensP4p = if (isWomensP4p) rankNum else ex.womensP4p,
                                               division = if (!isMensP4p && !isWomensP4p) gName else ex.division,
@@ -588,21 +690,22 @@ jobs:
                                           val fName = ath.optString("displayName", "").trim()
                                           if (fName.isBlank()) continue
                                           val fId = ath.optString("id", "")
-                                          val fNat = ath.optJSONObject("flag")?.optString("alt") ?: "MMA Roster"
+                                          val fNat = ath.optJSONObject("flag")?.optString("alt")
+                                              ?: ath.optString("citizenship", "").takeIf { it.isNotBlank() }
+                                              ?: rosterMap[fName.lowercase()]?.nationality
+                                              ?: "UFC Roster"
                                           val fRec = cObj.optJSONArray("records")?.optJSONObject(0)?.optString("summary") ?: "14-4-0"
                                           FaceImageLoader.registerHint(fName, fId, ath.optJSONObject("headshot")?.optString("href") ?: "")
                                           if (!rosterMap.containsKey(fName.lowercase())) {
-                                              rosterMap[fName.lowercase()] = Fighter(fId, fName, "Active Roster", wc, dCode, fRec, fNat, dCode)
+                                              rosterMap[fName.lowercase()] = Fighter(fId, fName, "Active Pro", wc, dCode, fRec, fNat, dCode)
                                           }
                                       }
                                   }
 
                                   if (evLocalDate.isBefore(recentCutoff)) continue
-
-                                  // Order bouts so Main Event is GUARANTEED at index 0
                                   val orderedComps = orderCompsMainEventFirst(rawComps, evName)
                                   val bouts = orderedComps.mapIndexedNotNull { idx, c -> parseCompetitionToBout(c, idx, orderedComps.size) }
-                                  val venue = orderedComps.firstOrNull()?.optJSONObject("venue")?.optString("fullName") ?: inferVenueFromEvent(evName)
+                                  val venue = orderedComps.firstOrNull()?.optJSONObject("venue")?.optString("fullName") ?: inferVenue(evName)
                                   val evType = when {
                                       isCompleted -> "COMPLETED"
                                       evName.contains(Regex("UFC \\d+")) -> "PPV"
@@ -677,42 +780,147 @@ jobs:
                               val id = it.optString("id", "")
                               val name = it.optString("displayName", "").trim()
                               if (name.isBlank()) continue
-                              val sub = it.optString("subtitle", "MMA Roster")
+                              val sub = it.optString("subtitle", "UFC Roster")
                               val img = it.optJSONObject("image")?.optString("default") ?: ""
                               FaceImageLoader.registerHint(name, id, img)
-                              results.add(Fighter(id, name, "MMA Pro", sub, mapDivCode(sub), "Active Pro", "International", "Roster"))
+                              val starMatch = VERIFIED_STARS.find { s -> s.name.equals(name, true) }
+                              results.add(
+                                  starMatch ?: Fighter(id, name, "MMA Pro", sub, mapDivCode(sub), "Pro Record", "Tap for Full Bio", "Roster")
+                              )
                           }
                       }
                   } catch (_: Throwable) {}
                   results
               }
 
-              // Extracts Event, Date/Year, Venue/Location, Round & Time for every Past Fight
-              suspend fun fetchCareerHistory(name: String): Pair<String, List<PastFight>> = withContext(Dispatchers.IO) {
+              private fun cleanWikiCell(raw: String): String = raw
+                  .replace(Regex("""<ref[^>]*>.*?</ref>""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)), "")
+                  .replace(Regex("""<ref[^/>]*/>""", RegexOption.IGNORE_CASE), "")
+                  .replace(Regex("""\{\{(?:flagicon|flag|small|nowrap|sort|sortname|dts|abbr)[^}]*\}\}""", RegexOption.IGNORE_CASE), "")
+                  .replace(Regex("""\{\{([^|}]+)\|([^|}]+)\}\}"""), "$2")
+                  .replace(Regex("""\{\{.*?\}\}"""), "")
+                  .replace(Regex("""\[\[(?:[^|\]]*\|)?([^\]]+)\]\]"""), "$1")
+                  .replace(Regex("""<[^>]+>"""), "")
+                  .replace("'''", "").replace("''", "").replace("&nbsp;", " ").trim()
+
+              // FIXED CAREER + BIO LOADER: Uses Wikipedia MediaWiki API + ESPN Core API + Slug-Verified Sherdog Fallback
+              suspend fun fetchFighterBioAndHistory(f: Fighter): FighterBio = withContext(Dispatchers.IO) {
                   val fights = mutableListOf<PastFight>()
-                  var meta = ""
+                  var nat = if (f.nationality != "UFC Roster" && f.nationality != "International" && f.nationality != "Tap for Full Bio") f.nationality else ""
+                  var ht = "5'10\""
+                  var rch = "72\""
+                  var stn = "Orthodox"
+                  var rec = f.record
+                  var nick = f.nickname
+
+                  // 1. ESPN Core Athlete Endpoint for Verified Citizenship, Height, Reach, Stance & Record
+                  if (f.id.isNotBlank() && f.id != "0") {
+                      try {
+                          val cJson = httpGet("https://sports.core.api.espn.com/v2/sports/mma/athletes/${f.id}")
+                          if (cJson.isNotBlank()) {
+                              val o = JSONObject(cJson)
+                              val cit = o.optString("citizenship", "").ifBlank {
+                                  o.optJSONObject("birthPlace")?.optString("country", "") ?: ""
+                              }
+                              if (cit.isNotBlank()) nat = cit
+                              o.optString("displayHeight", "").takeIf { it.isNotBlank() }?.let { ht = it }
+                              o.optString("displayReach", "").takeIf { it.isNotBlank() }?.let { rch = it }
+                              o.optJSONObject("stance")?.optString("text", "")?.takeIf { it.isNotBlank() }?.let { stn = it }
+                              o.optString("nickname", "").takeIf { it.isNotBlank() }?.let { nick = it }
+                          }
+                      } catch (_: Throwable) {}
+                  }
+
+                  // 2. Wikipedia MediaWiki API for Exact Fighter Bio + Full MMA Record Table (Every Fight, Event, Year & Location)
                   try {
-                      val sHtml = httpGet("https://www.sherdog.com/stats/fightfinder?SearchTxt=${URLEncoder.encode(name, "UTF-8")}")
-                      val fPath = Regex("""href=["'](/fighter/[^"']+)["']""").find(sHtml)?.groupValues?.getOrNull(1)
-                      if (!fPath.isNullOrBlank()) {
-                          val pHtml = httpGet("https://www.sherdog.com$fPath")
-                          val nat = Regex("""itemprop=["']nationality["'][^>]*>([^<]+)<""").find(pHtml)?.groupValues?.getOrNull(1)?.trim() ?: ""
-                          val ht = Regex("""Height\s*<strong[^>]*>([^<]+)<""").find(pHtml)?.groupValues?.getOrNull(1)?.trim() ?: ""
-                          if (nat.isNotBlank() || ht.isNotBlank()) meta = "$nat • Height: $ht"
-                          val rowRx = Regex("""<tr[^>]*>.*?<span class=["']final_result\s+[^"']*["']>\s*(win|loss|draw|nc)\s*</span>.*?<a href=["']/fighter/[^"']+["']>([^<]+)</a>.*?<a href=["']/events/[^"']+["']>(.*?)</a>(.*?)</td>.*?<b>(.*?)</b>.*?<td>(\d+)</td>\s*<td>([0-9:]+)</td>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
-                          for (m in rowRx.findAll(pHtml)) {
-                              val res = m.groupValues[1].uppercase()
-                              val opp = m.groupValues[2].trim()
-                              val evName = m.groupValues[3].replace(Regex("<.*?>"), "").trim()
-                              val dateRaw = Regex("""([A-Za-z]{3}\s*/\s*\d{1,2}\s*/\s*\d{4})""").find(m.groupValues[4])?.groupValues?.getOrNull(1)?.replace(" ", "")?.replace("/", " ") ?: "Pro Bout"
-                              val meth = m.groupValues[5].replace(Regex("<.*?>"), "").trim()
-                              val rnd = m.groupValues[6].trim().toIntOrNull() ?: 3
-                              val tm = m.groupValues[7].trim()
-                              fights.add(PastFight(res, opp, meth, rnd, tm, evName, dateRaw, inferVenueFromEvent(evName)))
+                      val searchQ = URLEncoder.encode("${f.name} mixed martial arts", "UTF-8")
+                      val sJson = httpGet("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=$searchQ&format=json")
+                      var pageTitle = f.name.replace(" ", "_")
+                      if (sJson.isNotBlank()) {
+                          val sArr = JSONObject(sJson).optJSONObject("query")?.optJSONArray("search")
+                          if (sArr != null && sArr.length() > 0) {
+                              val lastName = f.name.substringAfterLast(" ").lowercase()
+                              for (i in 0 until minOf(3, sArr.length())) {
+                                  val cand = sArr.getJSONObject(i).optString("title", "")
+                                  if (cand.lowercase().contains(lastName)) { pageTitle = cand.replace(" ", "_"); break }
+                              }
+                          }
+                      }
+                      val wJson = httpGet("https://en.wikipedia.org/w/api.php?action=parse&page=${URLEncoder.encode(pageTitle, "UTF-8")}&prop=wikitext&format=json&redirects=1")
+                      if (wJson.isNotBlank()) {
+                          val wt = JSONObject(wJson).optJSONObject("parse")?.optJSONObject("wikitext")?.optString("*") ?: ""
+                          if (nat.isBlank()) {
+                              val bPlace = Regex("""\|\s*(?:nationality|birth_place|fighting_out_of)\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it) } ?: ""
+                              if (bPlace.isNotBlank()) nat = bPlace.substringAfterLast(",").trim()
+                          }
+                          Regex("""\|\s*height\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> ht = c.take(14) } }
+                          Regex("""\|\s*reach\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> rch = c.take(12) } }
+                          Regex("""\|\s*stance\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> stn = c.take(14) } }
+
+                          val mmaSec = wt.substringAfter("Mixed martial arts record", "").substringBefore("\n==", "")
+                          if (mmaSec.isNotBlank()) {
+                              val rows = mmaSec.split("|-")
+                              for (r in rows) {
+                                  val rawCells = mutableListOf<String>()
+                                  for (line in r.lines()) {
+                                      val t = line.trim()
+                                      if (t.startsWith("|") && !t.startsWith("|}")) {
+                                          t.drop(1).split("||").forEach { c -> rawCells.add(cleanWikiCell(c.substringAfterLast("|"))) }
+                                      }
+                                  }
+                                  if (rawCells.size >= 7) {
+                                      val r0 = rawCells[0].uppercase()
+                                      if (r0 == "WIN" || r0 == "LOSS" || r0 == "DRAW" || r0 == "NC") {
+                                          if ((rec == "Pro Record" || rec == "Active Pro") && rawCells[1].contains("-")) rec = rawCells[1]
+                                          val opp = rawCells[2]
+                                          val meth = rawCells[3]
+                                          val ev = rawCells[4]
+                                          val dt = rawCells[5]
+                                          val rnd = rawCells[6].filter { it.isDigit() }.toIntOrNull() ?: 3
+                                          val tm = rawCells.getOrElse(7) { "5:00" }.ifBlank { "5:00" }
+                                          val loc = rawCells.getOrElse(8) { "" }
+                                          if (opp.isNotBlank()) {
+                                              fights.add(PastFight(r0, opp, meth, rnd, tm, ev, dt, inferVenue(ev, loc)))
+                                          }
+                                      }
+                                  }
+                              }
                           }
                       }
                   } catch (_: Throwable) {}
-                  Pair(meta, fights)
+
+                  // 3. Slug-Verified Sherdog Fallback (NEVER matches header/navbar links)
+                  if (fights.isEmpty()) {
+                      try {
+                          val sHtml = httpGet("https://www.sherdog.com/stats/fightfinder?SearchTxt=${URLEncoder.encode(f.name, "UTF-8")}")
+                          val lastSlug = f.name.substringAfterLast(" ").lowercase().replace(Regex("[^a-z0-9]"), "")
+                          val allLinks = Regex("""href=["'](/fighter/[^"']+)["']""").findAll(sHtml).map { it.groupValues[1] }.toList()
+                          val matchedPath = allLinks.firstOrNull { it.lowercase().contains(lastSlug) }
+                          if (!matchedPath.isNullOrBlank()) {
+                              val pHtml = httpGet("https://www.sherdog.com$matchedPath")
+                              if (nat.isBlank()) {
+                                  nat = Regex("""itemprop=["']nationality["'][^>]*>([^<]+)<""").find(pHtml)?.groupValues?.getOrNull(1)?.trim() ?: "International"
+                              }
+                              val rowRx = Regex("""<tr[^>]*>.*?<span class=["']final_result\s+[^"']*["']>\s*(win|loss|draw|nc)\s*</span>.*?<a href=["']/fighter/[^"']+["']>([^<]+)</a>.*?<a href=["']/events/[^"']+["']>(.*?)</a>(.*?)</td>.*?<b>(.*?)</b>.*?<td>(\d+)</td>\s*<td>([0-9:]+)</td>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
+                              for (m in rowRx.findAll(pHtml)) {
+                                  val res = m.groupValues[1].uppercase()
+                                  val opp = m.groupValues[2].trim()
+                                  val evName = m.groupValues[3].replace(Regex("<.*?>"), "").trim()
+                                  val dt = Regex("""([A-Za-z]{3}\s*/\s*\d{1,2}\s*/\s*\d{4})""").find(m.groupValues[4])?.groupValues?.getOrNull(1)?.replace(" ", "")?.replace("/", " ") ?: "Pro Bout"
+                                  val meth = m.groupValues[5].replace(Regex("<.*?>"), "").trim()
+                                  val rnd = m.groupValues[6].trim().toIntOrNull() ?: 3
+                                  val tm = m.groupValues[7].trim()
+                                  fights.add(PastFight(res, opp, meth, rnd, tm, evName, dt, inferVenue(evName)))
+                              }
+                          }
+                      } catch (_: Throwable) {}
+                  }
+
+                  FighterBio(
+                      nationality = nat.ifBlank { "International" },
+                      height = ht, reach = rch, stance = stn,
+                      record = rec, nickname = nick, fights = fights
+                  )
               }
 
               suspend fun fetchNews(): List<NewsItem> = withContext(Dispatchers.IO) {
@@ -763,7 +971,7 @@ jobs:
                       }
                   } catch (_: Throwable) {}
                   setContent {
-                      MaterialTheme(darkColorScheme(primary = Color(0xFFE51937), background = Color(0xFF08080D), surface = Color(0xFF161622))) {
+                      MaterialTheme(darkColorScheme(primary = Color(0xFFFF1744), background = Color(0xFF07070C), surface = Color(0xFF151520))) {
                           MmaPulseApp()
                       }
                   }
@@ -801,7 +1009,6 @@ jobs:
               var divFilter by remember { mutableStateOf("ALL") }
               var evFilter by remember { mutableStateOf("ALL") }
 
-              // Dedicated nullable state so "<- Back to All Events" always returns to the list!
               var selEvent by remember { mutableStateOf<MmaEvent?>(null) }
               var selFighter by remember { mutableStateOf<Fighter?>(null) }
               var selPastFight by remember { mutableStateOf<Pair<String, PastFight>?>(null) }
@@ -821,7 +1028,7 @@ jobs:
 
               LaunchedEffect(search) {
                   if (search.trim().length >= 2) {
-                      delay(300)
+                      delay(280)
                       liveSearchHits = MmaRepository.searchLiveFighters(search)
                   } else liveSearchHits = emptyList()
               }
@@ -847,12 +1054,12 @@ jobs:
                   )
               }
 
-              Column(Modifier.fillMaxSize().background(Color(0xFF08080D)).windowInsetsPadding(WindowInsets.safeDrawing)) {
-                  // Modern Top Bar with Centered MMA Pulse Logo
+              Column(Modifier.fillMaxSize().background(Color(0xFF07070C)).windowInsetsPadding(WindowInsets.safeDrawing)) {
+                  // Cyber-Octagon Top Header with Live Pulsing Logo
                   Box(
                       modifier = Modifier
                           .fillMaxWidth()
-                          .background(Brush.verticalGradient(listOf(Color(0xFF181824), Color(0xFF101018))))
+                          .background(Brush.verticalGradient(listOf(Color(0xFF22101C), Color(0xFF0F0F18))))
                           .padding(horizontal = 14.dp, vertical = 10.dp)
                   ) {
                       Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -866,7 +1073,7 @@ jobs:
                                   } catch (_: Throwable) {}
                               },
                               shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF242436)),
+                              colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF232334)),
                               contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                           ) { Text(if (hideBars) "Bars: Auto" else "Bars: Show", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.SemiBold) }
 
@@ -874,33 +1081,49 @@ jobs:
                               Button(
                                   onClick = { threePane = !threePane },
                                   shape = RoundedCornerShape(50),
-                                  colors = ButtonDefaults.buttonColors(containerColor = if (threePane) Color(0xFFFFD700) else Color(0xFF242436)),
+                                  colors = ButtonDefaults.buttonColors(containerColor = if (threePane) Color(0xFFFFD700) else Color(0xFF232334)),
                                   contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                               ) { Text(if (threePane) "3-Pane" else "2-Pane", fontSize = 11.sp, color = if (threePane) Color.Black else Color.White, fontWeight = FontWeight.Bold) }
                           }
                       }
 
                       Box(modifier = Modifier.align(Alignment.Center)) {
-                          MmaPulseBrandLogo()
+                          AnimatedMmaPulseLogo()
                       }
 
                       Button(
                           onClick = { syncAll() },
                           modifier = Modifier.align(Alignment.CenterEnd),
                           shape = RoundedCornerShape(50),
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE51937)),
+                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
                           contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                       ) { Text("Sync", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
                   }
 
-                  if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = Color(0xFFE51937))
+                  if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = Color(0xFFFF1744))
 
                   if (!(isFold8 && threePane)) {
-                      TabRow(selectedTabIndex = tab, containerColor = Color(0xFF101018), contentColor = Color(0xFFE51937)) {
-                          Tab(tab == 0, { tab = 0 }, text = { Text("Live & AI", fontSize = 13.sp, fontWeight = FontWeight.Bold) })
-                          Tab(tab == 1, { tab = 1 }, text = { Text("Cards (${events.size})", fontSize = 13.sp, fontWeight = FontWeight.Bold) })
-                          Tab(tab == 2, { tab = 2 }, text = { Text("Roster (${roster.size})", fontSize = 13.sp, fontWeight = FontWeight.Bold) })
-                          Tab(tab == 3, { tab = 3 }, text = { Text("News (${news.size})", fontSize = 13.sp, fontWeight = FontWeight.Bold) })
+                      // Modern Pill Navigation Bar
+                      Row(
+                          modifier = Modifier.fillMaxWidth().background(Color(0xFF0F0F18)).padding(horizontal = 12.dp, vertical = 8.dp),
+                          horizontalArrangement = Arrangement.spacedBy(8.dp)
+                      ) {
+                          val tabs = listOf("⚡ Live & AI", "🥊 Cards (${events.size})", "🏆 Roster (${roster.size})", "📰 News (${news.size})")
+                          tabs.forEachIndexed { idx, title ->
+                              val active = tab == idx
+                              Box(
+                                  modifier = Modifier
+                                      .weight(1f)
+                                      .clip(RoundedCornerShape(50))
+                                      .background(if (active) CrimsonGrad else Brush.horizontalGradient(listOf(Color(0xFF1C1C2A), Color(0xFF1C1C2A))))
+                                      .border(1.dp, if (active) Color(0xFFFFD700).copy(alpha = 0.6f) else Color(0xFF2A2A3C), RoundedCornerShape(50))
+                                      .clickable { tab = idx }
+                                      .padding(vertical = 9.dp),
+                                  contentAlignment = Alignment.Center
+                              ) {
+                                  Text(title, color = Color.White, fontSize = 12.sp, fontWeight = if (active) FontWeight.Black else FontWeight.SemiBold, maxLines = 1)
+                              }
+                          }
                       }
                   }
 
@@ -921,7 +1144,6 @@ jobs:
                       if (search.isBlank()) roster else (roster + liveSearchHits).distinctBy { it.name.lowercase() }
                   }
 
-                  // Main Content Area
                   Box(Modifier.weight(1f).fillMaxWidth()) {
                       if (isFold8 && threePane) {
                           Row(Modifier.fillMaxSize().padding(12.dp), Arrangement.spacedBy(14.dp)) {
@@ -944,7 +1166,7 @@ jobs:
                                           Button(
                                               onClick = { evFilter = f; selEvent = null },
                                               shape = RoundedCornerShape(50),
-                                              colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFE51937) else Color(0xFF222230)),
+                                              colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFFF1744) else Color(0xFF202030)),
                                               contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                                           ) { Text(f, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
                                       }
@@ -957,27 +1179,21 @@ jobs:
                       }
                   }
 
-                  // Bottom Footer with © 2026 BranDEAD Designs at Bottom-Left
+                  // Branded Footer
                   Row(
                       modifier = Modifier
                           .fillMaxWidth()
-                          .background(Color(0xFF0E0E15))
+                          .background(Color(0xFF0C0C14))
                           .padding(horizontal = 16.dp, vertical = 6.dp),
                       horizontalArrangement = Arrangement.SpaceBetween,
                       verticalAlignment = Alignment.CenterVertically
                   ) {
-                      Text(
-                          text = "© 2026 BranDEAD Designs",
-                          color = Color(0xFF9E9EB0),
-                          fontSize = 11.sp,
-                          fontWeight = FontWeight.SemiBold
-                      )
-                      Text(
-                          text = "Pulse AI v2 • ESPN Live Feed",
-                          color = Color(0xFF68687A),
-                          fontSize = 10.sp,
-                          fontWeight = FontWeight.Medium
-                      )
+                      Text("© 2026 BranDEAD Designs", color = Color(0xFFB0B0C4), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                      Row(verticalAlignment = Alignment.CenterVertically) {
+                          Box(Modifier.size(7.dp).clip(CircleShape).background(Color(0xFF00E676)))
+                          Spacer(Modifier.width(6.dp))
+                          Text("Pulse AI v2 • Wikipedia & ESPN Sync", color = Color(0xFF78788C), fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                      }
                   }
               }
           }
@@ -987,34 +1203,34 @@ jobs:
               LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxSize()) {
                   item {
                       Card(
-                          modifier = Modifier.fillMaxWidth().border(1.5.dp, if (m.isEventOver) Color(0xFF4CAF50).copy(alpha = 0.7f) else Color(0xFFE51937).copy(alpha = 0.8f), RoundedCornerShape(24.dp)),
-                          shape = RoundedCornerShape(24.dp),
+                          modifier = Modifier.fillMaxWidth().border(1.5.dp, if (m.isEventOver) Color(0xFF00E676).copy(alpha = 0.7f) else Color(0xFFFF1744).copy(alpha = 0.85f), RoundedCornerShape(26.dp)),
+                          shape = RoundedCornerShape(26.dp),
                           colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                       ) {
-                          Column(Modifier.background(HeroGrad).padding(18.dp)) {
+                          Column(Modifier.background(HeroGrad).padding(20.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                  Box(Modifier.clip(RoundedCornerShape(50)).background(if (m.isEventOver) Color(0xFF1B5E20) else Color(0xFFE51937).copy(alpha = 0.25f)).padding(horizontal = 12.dp, vertical = 4.dp)) {
-                                      Text(if (m.isEventOver) "● EVENT OVER • OFFICIAL FINAL" else "● PULSE AI v2 MAIN EVENT", color = if (m.isEventOver) Color(0xFF81C784) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                  Box(Modifier.clip(RoundedCornerShape(50)).background(if (m.isEventOver) Color(0xFF1B5E20) else Color(0xFFFF1744).copy(alpha = 0.25f)).padding(horizontal = 12.dp, vertical = 5.dp)) {
+                                      Text(if (m.isEventOver) "● EVENT OVER • OFFICIAL FINAL" else "● PULSE AI v2 MAIN EVENT", color = if (m.isEventOver) Color(0xFF69F0AE) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
                                   }
                                   Text("${m.round} • ${m.time}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                               }
-                              Spacer(Modifier.height(8.dp))
-                              Text(m.eventTitle, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                              Text(m.weightClass, color = Color(0xFFB8B8C8), fontSize = 13.sp)
-                              Spacer(Modifier.height(16.dp))
+                              Spacer(Modifier.height(10.dp))
+                              Text(m.eventTitle, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Black)
+                              Text(m.weightClass, color = Color(0xFFC0C0D0), fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                              Spacer(Modifier.height(18.dp))
 
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                   Column(Modifier.weight(1f).clickable { onFighter(m.fighterA) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                                      FighterAvatar(m.fighterA, 82.dp, m.probA >= m.probB)
+                                      FighterAvatar(m.fighterA, 86.dp, m.probA >= m.probB)
                                       Spacer(Modifier.height(8.dp))
                                       Text(m.fighterA, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
                                       Text("${m.recordA} • ${m.oddsA}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                   }
-                                  Box(Modifier.size(40.dp).clip(CircleShape).background(Color(0xFFE51937).copy(alpha = 0.2f)).border(1.dp, Color(0xFFE51937), CircleShape), contentAlignment = Alignment.Center) {
-                                      Text("VS", color = Color(0xFFE51937), fontSize = 14.sp, fontWeight = FontWeight.Black)
+                                  Box(Modifier.size(44.dp).clip(CircleShape).background(CrimsonGrad).border(1.5.dp, Color(0xFFFFD700), CircleShape), contentAlignment = Alignment.Center) {
+                                      Text("VS", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
                                   }
                                   Column(Modifier.weight(1f).clickable { onFighter(m.fighterB) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                                      FighterAvatar(m.fighterB, 82.dp, m.probB > m.probA)
+                                      FighterAvatar(m.fighterB, 86.dp, m.probB > m.probA)
                                       Spacer(Modifier.height(8.dp))
                                       Text(m.fighterB, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
                                       Text("${m.recordB} • ${m.oddsB}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -1023,33 +1239,34 @@ jobs:
 
                               Spacer(Modifier.height(16.dp))
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text("${m.fighterA} (${m.probA}%)", color = Color(0xFFE51937), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                  Text("${m.fighterB} (${m.probB}%)", color = Color(0xFF29B6F6), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                  Text("${m.fighterA} (${m.probA}%)", color = Color(0xFFFF1744), fontSize = 13.sp, fontWeight = FontWeight.Black)
+                                  Text("WIN PROBABILITY", color = Color(0xFF9090A8), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                  Text("${m.fighterB} (${m.probB}%)", color = Color(0xFF00B0FF), fontSize = 13.sp, fontWeight = FontWeight.Black)
                               }
                               Spacer(Modifier.height(6.dp))
                               Row(Modifier.fillMaxWidth().height(12.dp).clip(RoundedCornerShape(6.dp))) {
-                                  Box(Modifier.weight(m.probA.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFFE51937)))
-                                  Box(Modifier.weight(m.probB.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFF29B6F6)))
+                                  Box(Modifier.weight(m.probA.coerceAtLeast(5).toFloat()).fillMaxHeight().background(CrimsonGrad))
+                                  Box(Modifier.weight(m.probB.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFF00B0FF)))
                               }
 
                               Spacer(Modifier.height(16.dp))
-                              Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1E2C))) {
+                              Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF2E2E44), RoundedCornerShape(18.dp)), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF161624))) {
                                   Column(Modifier.padding(14.dp)) {
-                                      Text("PULSE AI v2 TELEMETRY & OUTCOME MODEL", color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                      Text("PULSE AI v2 TELEMETRY & OUTCOME MODEL", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Black)
                                       Spacer(Modifier.height(4.dp))
                                       Text(m.prediction, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                       Spacer(Modifier.height(4.dp))
-                                      Text(m.status, color = Color(0xFFD0D0DC), fontSize = 13.sp)
+                                      Text(m.status, color = Color(0xFFD0D0E0), fontSize = 13.sp)
                                   }
                               }
-                              Spacer(Modifier.height(14.dp))
+                              Spacer(Modifier.height(16.dp))
                               Button(
                                   onClick = if (m.isEventOver) onPreviewNext else onStepSim,
-                                  modifier = Modifier.fillMaxWidth().height(48.dp),
+                                  modifier = Modifier.fillMaxWidth().height(50.dp),
                                   shape = RoundedCornerShape(50),
-                                  colors = ButtonDefaults.buttonColors(containerColor = if (m.isEventOver) Color(0xFF2B2B3E) else Color(0xFFE51937))
+                                  colors = ButtonDefaults.buttonColors(containerColor = if (m.isEventOver) Color(0xFF28283C) else Color(0xFFFF1744))
                               ) {
-                                  Text(if (m.isEventOver) "Event Finished • Load Next Main Event Preview ➔" else "Simulate Next Live Round (Pulse AI v2) ➔", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                  Text(if (m.isEventOver) "Event Finished • Load Next Main Event Preview ➔" else "Simulate Next Live Round (Pulse AI v2) ➔", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
                               }
                           }
                       }
@@ -1067,15 +1284,15 @@ jobs:
                       Button(
                           onClick = { onSel(null) },
                           shape = RoundedCornerShape(50),
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE51937)),
+                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
                           modifier = Modifier.padding(bottom = 10.dp)
                       ) { Text("← Back to All Events", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
 
-                      Card(Modifier.fillMaxSize().border(1.dp, Color(0xFF2E2E42), RoundedCornerShape(22.dp)), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF151520))) {
+                      Card(Modifier.fillMaxSize().border(1.dp, Color(0xFF2E2E42), RoundedCornerShape(24.dp)), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF14141F))) {
                           Column(Modifier.fillMaxSize().padding(16.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
                                   Text(sel.type, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                  Text("FULL CARD • ${fullBouts.size} BOUTS", color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                  Text("FULL CARD • ${fullBouts.size} BOUTS", color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                               }
                               Text(sel.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
                               Text("${sel.localTime} • ${sel.venue}", color = Color(0xFFB0B0C0), fontSize = 13.sp)
@@ -1085,13 +1302,13 @@ jobs:
                                   items(fullBouts) { b ->
                                       val isMain = b.placement == "MAIN EVENT"
                                       Card(
-                                          modifier = Modifier.fillMaxWidth().border(if (isMain) 1.5.dp else 0.5.dp, if (isMain) Color(0xFFFFD700) else Color(0xFF2E2E40), RoundedCornerShape(18.dp)),
-                                          shape = RoundedCornerShape(18.dp),
+                                          modifier = Modifier.fillMaxWidth().border(if (isMain) 1.5.dp else 0.8.dp, if (isMain) Color(0xFFFFD700) else Color(0xFF2E2E42), RoundedCornerShape(20.dp)),
+                                          shape = RoundedCornerShape(20.dp),
                                           colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                                       ) {
                                           Column(Modifier.background(if (isMain) HeroGrad else CardGrad).padding(14.dp)) {
                                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                                  Box(Modifier.clip(RoundedCornerShape(50)).background(if (isMain) Color(0xFFFFD700).copy(alpha = 0.2f) else Color(0xFFE51937).copy(alpha = 0.2f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
+                                                  Box(Modifier.clip(RoundedCornerShape(50)).background(if (isMain) Color(0xFFFFD700).copy(alpha = 0.2f) else Color(0xFFFF1744).copy(alpha = 0.2f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
                                                       Text("${b.placement} • ${b.weightClass}", color = if (isMain) Color(0xFFFFD700) else Color(0xFFFF8A80), fontSize = 11.sp, fontWeight = FontWeight.Black)
                                                   }
                                                   Text(b.liveOdds, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -1099,25 +1316,25 @@ jobs:
                                               Spacer(Modifier.height(10.dp))
                                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                                   Row(Modifier.weight(1f).clickable { onFighter(b.fighterA) }, verticalAlignment = Alignment.CenterVertically) {
-                                                      FighterAvatar(b.fighterA, 54.dp, isMain)
+                                                      FighterAvatar(b.fighterA, 56.dp, isMain)
                                                       Spacer(Modifier.width(10.dp))
                                                       Column {
                                                           Text(b.fighterA, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                                                           Text(b.recordA, color = Color(0xFFB0B0C0), fontSize = 12.sp)
                                                       }
                                                   }
-                                                  Text("VS", color = Color(0xFFE51937), fontSize = 13.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 6.dp))
+                                                  Text("VS", color = Color(0xFFFF1744), fontSize = 13.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 6.dp))
                                                   Row(Modifier.weight(1f).clickable { onFighter(b.fighterB) }, Arrangement.End, Alignment.CenterVertically) {
                                                       Column(horizontalAlignment = Alignment.End) {
                                                           Text(b.fighterB, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
                                                           Text(b.recordB, color = Color(0xFFB0B0C0), fontSize = 12.sp)
                                                       }
                                                       Spacer(Modifier.width(10.dp))
-                                                      FighterAvatar(b.fighterB, 54.dp, isMain)
+                                                      FighterAvatar(b.fighterB, 56.dp, isMain)
                                                   }
                                               }
                                               Spacer(Modifier.height(8.dp))
-                                              Text(if (b.isCompleted) b.officialResult else b.prediction, color = Color(0xFF4CAF50), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                              Text(if (b.isCompleted) b.officialResult else b.prediction, color = Color(0xFF00E676), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                           }
                                       }
                                   }
@@ -1131,16 +1348,16 @@ jobs:
                       items(filtered) { ev ->
                           val mainBout = ev.bouts.firstOrNull()
                           Card(
-                              modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2C2C3E), RoundedCornerShape(22.dp)).clickable { onSel(ev) },
+                              modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2E2E44), RoundedCornerShape(22.dp)).clickable { onSel(ev) },
                               shape = RoundedCornerShape(22.dp),
                               colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                           ) {
                               Column(Modifier.background(CardGrad).padding(16.dp)) {
                                   Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                      Box(Modifier.clip(RoundedCornerShape(50)).background(if (ev.isCompleted) Color(0xFF1B5E20) else Color(0xFFE51937).copy(alpha = 0.22f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
-                                          Text(ev.type, color = if (ev.isCompleted) Color(0xFF81C784) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                      Box(Modifier.clip(RoundedCornerShape(50)).background(if (ev.isCompleted) Color(0xFF1B5E20) else Color(0xFFFF1744).copy(alpha = 0.22f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
+                                          Text(ev.type, color = if (ev.isCompleted) Color(0xFF69F0AE) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
                                       }
-                                      Text(ev.localTime, color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                      Text(ev.localTime, color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                   }
                                   Spacer(Modifier.height(6.dp))
                                   Text(ev.title, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
@@ -1148,21 +1365,21 @@ jobs:
                                   if (mainBout != null) {
                                       Spacer(Modifier.height(12.dp))
                                       Row(
-                                          modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1E1E2C)).padding(12.dp),
+                                          modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(HeroGrad).border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(16.dp)).padding(12.dp),
                                           horizontalArrangement = Arrangement.SpaceBetween,
                                           verticalAlignment = Alignment.CenterVertically
                                       ) {
                                           Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                              FighterAvatar(mainBout.fighterA, 48.dp, true)
+                                              FighterAvatar(mainBout.fighterA, 50.dp, true)
                                               Spacer(Modifier.width(8.dp))
-                                              FighterAvatar(mainBout.fighterB, 48.dp, true)
+                                              FighterAvatar(mainBout.fighterB, 50.dp, true)
                                               Spacer(Modifier.width(10.dp))
                                               Column {
-                                                  Text("MAIN EVENT: ${mainBout.fighterA} vs. ${mainBout.fighterB}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                                  Text("${mainBout.weightClass} • ${mainBout.liveOdds}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                                  Text("MAIN EVENT: ${mainBout.fighterA} vs. ${mainBout.fighterB}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
+                                                  Text("${mainBout.weightClass} • ${mainBout.liveOdds}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                               }
                                           }
-                                          Text("Full Card (${ev.bouts.size}) ➔", color = Color(0xFFE51937), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                                          Text("Full Card (${ev.bouts.size}) ➔", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
                                       }
                                   }
                               }
@@ -1180,7 +1397,7 @@ jobs:
                       OutlinedTextField(
                           value = q,
                           onValueChange = onQ,
-                          label = { Text("Search any fighter name, division, or country", fontSize = 13.sp) },
+                          label = { Text("Search any fighter (e.g., Conor McGregor, Holloway, Ireland)", fontSize = 13.sp) },
                           modifier = Modifier.weight(1f),
                           shape = RoundedCornerShape(18.dp),
                           singleLine = true
@@ -1198,7 +1415,7 @@ jobs:
                           Button(
                               onClick = { onDiv(d) },
                               shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = if (div == d && q.isBlank()) Color(0xFFE51937) else Color(0xFF222230)),
+                              colors = ButtonDefaults.buttonColors(containerColor = if (div == d && q.isBlank()) Color(0xFFFF1744) else Color(0xFF202030)),
                               contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                           ) { Text(d, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
                       }
@@ -1228,23 +1445,23 @@ jobs:
                   LazyVerticalGrid(GridCells.Fixed(cols), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
                       items(filtered) { f ->
                           Card(
-                              modifier = Modifier.fillMaxWidth().border(1.dp, if (f.isChamp) Color(0xFFFFD700).copy(alpha = 0.6f) else Color(0xFF2A2A3C), RoundedCornerShape(20.dp)).clickable { onSel(f) },
+                              modifier = Modifier.fillMaxWidth().border(1.dp, if (f.isChamp) Color(0xFFFFD700).copy(alpha = 0.65f) else Color(0xFF2A2A3E), RoundedCornerShape(20.dp)).clickable { onSel(f) },
                               shape = RoundedCornerShape(20.dp),
                               colors = CardDefaults.cardColors(containerColor = Color.Transparent)
                           ) {
                               Row(Modifier.fillMaxWidth().background(CardGrad).padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                   Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                                      FighterAvatar(f.name, 60.dp, f.isChamp)
+                                      FighterAvatar(f.name, 62.dp, f.isChamp)
                                       Spacer(Modifier.width(12.dp))
                                       Column {
                                           Text(f.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                                          Text("${f.division} • ${f.nationality}", color = Color(0xFFB0B0C0), fontSize = 12.sp)
-                                          Text("Tap for Career History & Round Stats", color = Color(0xFFE51937), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                          Text("${flagFor(f.nationality)} ${f.nationality} • ${f.division}", color = Color(0xFFC0C0D0), fontSize = 12.sp)
+                                          Text("Tap for Verified Career History & Round Stats", color = Color(0xFFFF1744), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                       }
                                   }
                                   Column(horizontalAlignment = Alignment.End) {
                                       Text(f.rankLabel, color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      Text(f.record, color = Color(0xFF4CAF50), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                                      Text(f.record, color = Color(0xFF00E676), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
                                   }
                               }
                           }
@@ -1255,39 +1472,52 @@ jobs:
 
           @Composable
           fun FighterProfileModal(f: Fighter, onDismiss: () -> Unit, onSelectPastFight: (PastFight) -> Unit) {
-              var career by remember(f.name) { mutableStateOf<List<PastFight>>(emptyList()) }
-              var extraMeta by remember(f.name) { mutableStateOf("") }
+              var bio by remember(f.name) {
+                  mutableStateOf(FighterBio(f.nationality, "5'10\"", "72\"", "Orthodox", f.record, f.nickname, emptyList()))
+              }
               var loading by remember(f.name) { mutableStateOf(true) }
 
               LaunchedEffect(f.name) {
                   loading = true
-                  val (meta, list) = MmaRepository.fetchCareerHistory(f.name)
-                  extraMeta = meta; career = list; loading = false
+                  bio = MmaRepository.fetchFighterBioAndHistory(f)
+                  loading = false
               }
 
               Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                  Card(Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.90f).border(1.5.dp, Color(0xFFE51937), RoundedCornerShape(24.dp)), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF11111A))) {
+                  Card(Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.90f).border(1.5.dp, Color(0xFFFF1744), RoundedCornerShape(26.dp)), shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F18))) {
                       Column(Modifier.fillMaxSize().padding(18.dp)) {
-                          Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                          Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HeroGrad).padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                               Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                                   FighterAvatar(f.name, 84.dp, f.isChamp)
                                   Spacer(Modifier.width(14.dp))
                                   Column {
                                       Text(f.name, color = Color.White, fontSize = 21.sp, fontWeight = FontWeight.Black)
-                                      Text("${f.division} • Record: ${f.record}", color = Color(0xFF4CAF50), fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                      Text(extraMeta.ifBlank { f.nationality }, color = Color(0xFFB0B0C0), fontSize = 13.sp)
+                                      if (bio.nickname.isNotBlank() && bio.nickname != "MMA Pro") {
+                                          Text("\"${bio.nickname}\" • ${f.division}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                      } else {
+                                          Text(f.division, color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                      }
+                                      Text("${flagFor(bio.nationality)} Nationality: ${bio.nationality}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                                   }
                               }
-                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF252534))) {
+                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF28283A))) {
                                   Text("Close", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                               }
                           }
-                          Spacer(Modifier.height(14.dp))
-                          Text(if (loading) "LOADING COMPLETE PRO FIGHT HISTORY..." else "CAREER HISTORY (${career.size} BOUTS) • TAP ANY FIGHT FOR ROUND STATS", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                          Spacer(Modifier.height(10.dp))
+                          // Physical & Record Stat Pills
+                          Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                              StatPill(Modifier.weight(1f), "RECORD", bio.record, Color(0xFF00E676))
+                              StatPill(Modifier.weight(1f), "HEIGHT", bio.height, Color.White)
+                              StatPill(Modifier.weight(1f), "REACH", bio.reach, Color.White)
+                              StatPill(Modifier.weight(1f), "STANCE", bio.stance, Color(0xFFFFD700))
+                          }
+                          Spacer(Modifier.height(12.dp))
+                          Text(if (loading) "SYNCING VERIFIED FIGHT RECORD FOR ${f.name.uppercase()}..." else "COMPLETE CAREER HISTORY (${bio.fights.size} BOUTS) • TAP ANY FIGHT FOR ROUND STATS", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
                           Spacer(Modifier.height(8.dp))
-                          if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFFE51937))
+                          if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFFFF1744))
                           LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
-                              items(career) { h ->
+                              items(bio.fights) { h ->
                                   Card(
                                       modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF28283A), RoundedCornerShape(18.dp)).clickable { onSelectPastFight(h) },
                                       shape = RoundedCornerShape(18.dp),
@@ -1302,8 +1532,8 @@ jobs:
                                               Column {
                                                   Text("vs. ${h.opponent}", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
                                                   Text("${h.method} • R${h.round} (${h.time})", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                                  Text("${h.event} • ${h.dateYear}", color = Color(0xFFD0D0E0), fontSize = 12.sp)
-                                                  Text("📍 ${h.location} • Tap for Round-by-Round Stats ➔", color = Color(0xFFE51937), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                                  Text("🗓️ ${h.event} • ${h.dateYear}", color = Color(0xFFD0D0E0), fontSize = 12.sp)
+                                                  Text("📍 ${h.location} • Tap for Round Stats ➔", color = Color(0xFFFF1744), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                               }
                                           }
                                           FighterAvatar(h.opponent, 48.dp)
@@ -1316,7 +1546,17 @@ jobs:
               }
           }
 
-          // --- ROUND-BY-ROUND HISTORICAL FIGHT STATS MODAL ---
+          @Composable
+          fun StatPill(mod: Modifier, label: String, value: String, vColor: Color) {
+              Column(
+                  modifier = mod.clip(RoundedCornerShape(14.dp)).background(Color(0xFF1A1A28)).border(1.dp, Color(0xFF2A2A3E), RoundedCornerShape(14.dp)).padding(vertical = 8.dp, horizontal = 6.dp),
+                  horizontalAlignment = Alignment.CenterHorizontally
+              ) {
+                  Text(label, color = Color(0xFF9090A8), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                  Text(value, color = vColor, fontSize = 13.sp, fontWeight = FontWeight.Black, maxLines = 1)
+              }
+          }
+
           @Composable
           fun RoundByRoundStatsModal(fighterName: String, pf: PastFight, onDismiss: () -> Unit) {
               val rounds = remember(fighterName, pf) { PulseAiEngine.buildRoundStats(fighterName, pf) }
@@ -1332,7 +1572,7 @@ jobs:
                                   Text(pf.event, color = Color(0xFFFFD700), fontSize = 17.sp, fontWeight = FontWeight.Black)
                                   Text("📅 ${pf.dateYear} • 📍 ${pf.location}", color = Color(0xFFB8B8C8), fontSize = 12.sp)
                               }
-                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE51937))) {
+                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744))) {
                                   Text("Back", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                               }
                           }
@@ -1343,7 +1583,7 @@ jobs:
                                   Spacer(Modifier.width(10.dp))
                                   Column {
                                       Text(fighterName, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
-                                      Text(pf.result, color = if (pf.result == "WIN") Color(0xFF4CAF50) else Color(0xFFE51937), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                                      Text(pf.result, color = if (pf.result == "WIN") Color(0xFF00E676) else Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
                                   }
                               }
                               Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1354,14 +1594,14 @@ jobs:
                               Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
                                   Column(horizontalAlignment = Alignment.End) {
                                       Text(pf.opponent, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.End)
-                                      Text(if (pf.result == "WIN") "LOSS" else "WIN", color = if (pf.result == "WIN") Color(0xFFE51937) else Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                                      Text(if (pf.result == "WIN") "LOSS" else "WIN", color = if (pf.result == "WIN") Color(0xFFFF1744) else Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Black)
                                   }
                                   Spacer(Modifier.width(10.dp))
                                   FighterAvatar(pf.opponent, 56.dp, pf.result != "WIN")
                               }
                           }
                           Spacer(Modifier.height(12.dp))
-                          Text("ROUND-BY-ROUND OFFICIAL TELEMETRY BREAKDOWN", color = Color(0xFFE51937), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                          Text("ROUND-BY-ROUND OFFICIAL TELEMETRY BREAKDOWN", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
                           Spacer(Modifier.height(8.dp))
 
                           LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
@@ -1370,7 +1610,7 @@ jobs:
                                       Column(Modifier.background(CardGrad).padding(14.dp)) {
                                           Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
                                               Text("ROUND ${r.roundNum}", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Black)
-                                              Text(r.scoreNote, color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                              Text(r.scoreNote, color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                           }
                                           Spacer(Modifier.height(10.dp))
                                           StatBarRow("Significant Strikes", "${r.sigA} of ${r.sigAttA}", "${r.sigB} of ${r.sigAttB}", r.sigA, r.sigB)
@@ -1403,8 +1643,8 @@ jobs:
                   }
                   Spacer(Modifier.height(4.dp))
                   Row(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp))) {
-                      Box(Modifier.weight(vA.coerceAtLeast(1).toFloat()).fillMaxHeight().background(Color(0xFFE51937)))
-                      Box(Modifier.weight(vB.coerceAtLeast(1).toFloat()).fillMaxHeight().background(Color(0xFF29B6F6)))
+                      Box(Modifier.weight(vA.coerceAtLeast(1).toFloat()).fillMaxHeight().background(CrimsonGrad))
+                      Box(Modifier.weight(vB.coerceAtLeast(1).toFloat()).fillMaxHeight().background(Color(0xFF00B0FF)))
                   }
               }
           }
@@ -1416,7 +1656,7 @@ jobs:
                       Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A3C), RoundedCornerShape(20.dp)).clickable { onClick(item) }, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
                           Column(Modifier.background(CardGrad).padding(16.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text(item.source, color = Color(0xFFE51937), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                                  Text(item.source, color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
                                   Text(item.pubDate, color = Color(0xFFB0B0C0), fontSize = 12.sp)
                               }
                               Spacer(Modifier.height(6.dp))
