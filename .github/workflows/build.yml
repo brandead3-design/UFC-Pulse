@@ -23,7 +23,7 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Generate Complete Android Project Files
+      - name: Generate Complete Android 17 Project & Source Files
         run: |
           rm -rf app settings.gradle.kts gradle.properties
           mkdir -p app/src/main/java/com/ufc/pulse
@@ -54,13 +54,13 @@ jobs:
           }
           android {
               namespace = "com.ufc.pulse"
-              compileSdk = 34
+              compileSdk = 36
               defaultConfig {
                   applicationId = "com.ufc.pulse"
                   minSdk = 26
-                  targetSdk = 34
-                  versionCode = 7
-                  versionName = "7.0-Fold8-Pro"
+                  targetSdk = 36
+                  versionCode = 9
+                  versionName = "9.0-Android17-Pro"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -71,16 +71,16 @@ jobs:
               kotlinOptions { jvmTarget = "17" }
           }
           dependencies {
-              val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
+              val composeBom = platform("androidx.compose:compose-bom:2024.12.00")
               implementation(composeBom)
-              implementation("androidx.core:core-ktx:1.13.1")
-              implementation("androidx.activity:activity-compose:1.9.0")
+              implementation("androidx.core:core-ktx:1.15.0")
+              implementation("androidx.activity:activity-compose:1.10.0")
               implementation("androidx.compose.ui:ui")
               implementation("androidx.compose.foundation:foundation")
               implementation("androidx.compose.material3:material3")
-              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
-              implementation("androidx.work:work-runtime-ktx:2.9.0")
-              implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+              implementation("androidx.work:work-runtime-ktx:2.10.0")
+              implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
           }
           EOF
 
@@ -266,8 +266,8 @@ jobs:
 
               private fun httpGet(u: String): String = try {
                   val c = (URL(u).openConnection() as HttpURLConnection).apply {
-                      connectTimeout = 7000; readTimeout = 7000
-                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 15)")
+                      connectTimeout = 6000; readTimeout = 6000
+                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 16; SM-F976B)")
                   }
                   if (c.responseCode in 200..299) c.inputStream.bufferedReader().use { it.readText() } else ""
               } catch (_: Throwable) { "" }
@@ -285,26 +285,6 @@ jobs:
                           if (h.isNotBlank()) out.add(NewsItem(h, "ESPN UFC", p, l, d))
                       }
                   } catch (_: Throwable) {}
-                  try {
-                      val xml = httpGet("https://www.sherdog.com/rss/news.xml")
-                      if (xml.isNotBlank()) {
-                          val xp = Xml.newPullParser().apply { setInput(StringReader(xml)) }
-                          var ev = xp.eventType; var inItem = false; var t = ""; var l = ""; var d = ""
-                          while (ev != XmlPullParser.END_DOCUMENT) {
-                              val n = xp.name ?: ""
-                              if (ev == XmlPullParser.START_TAG) {
-                                  if (n.equals("item", true)) { inItem = true; t = ""; l = ""; d = "" }
-                                  else if (inItem && n.equals("title", true)) t = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inItem && n.equals("link", true)) l = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inItem && n.equals("description", true)) d = try { xp.nextText().replace(Regex("<.*?>"), "").trim() } catch (_: Throwable) { "" }
-                              } else if (ev == XmlPullParser.END_TAG && n.equals("item", true) && inItem) {
-                                  if (t.isNotBlank()) out.add(NewsItem(t, "Sherdog RSS", "Latest", l.ifBlank { "https://www.sherdog.com" }, d))
-                                  inItem = false
-                              }
-                              ev = xp.next()
-                          }
-                      }
-                  } catch (_: Throwable) {}
                   if (out.isEmpty()) listOf(
                       NewsItem("UFC Fight Night Live Results, Odds & Round Predictions", "UFC Pulse", "Live Now", "https://www.ufc.com", "Live round-by-round octagon tracking and fighter odds."),
                       NewsItem("UFC 334 & UFC 335 Title Fight Cards Official", "UFC Pulse", "Breaking", "https://www.ufc.com", "Full PPV and Fight Night schedules converted to local GMT/IST time.")
@@ -316,7 +296,7 @@ jobs:
               override suspend fun doWork(): Result = try {
                   val list = UfcData.fetchNews()
                   if (list.isNotEmpty()) {
-                      val prefs = applicationContext.getSharedPreferences("ufc_v7", Context.MODE_PRIVATE)
+                      val prefs = applicationContext.getSharedPreferences("ufc_v9", Context.MODE_PRIVATE)
                       val top = list.first()
                       if (top.title != prefs.getString("last", "")) {
                           prefs.edit().putString("last", top.title).apply()
@@ -328,8 +308,8 @@ jobs:
           }
 
           object Notifier {
-              private const val RSS_CH = "ufc_rss_v7"
-              private const val BAR_CH = "ufc_bar_v7"
+              private const val RSS_CH = "ufc_rss_v9"
+              private const val BAR_CH = "ufc_bar_v9"
 
               fun init(ctx: Context) {
                   try {
@@ -361,21 +341,21 @@ jobs:
               fun updateLiveBar(ctx: Context, m: LiveMatchState, active: Boolean) {
                   try {
                       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      if (!active) { nm.cancel(7001); return }
+                      if (!active) { nm.cancel(9001); return }
                       if (!canNotify(ctx)) return
                       init(ctx)
-                      val pi = PendingIntent.getActivity(ctx, 7001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+                      val pi = PendingIntent.getActivity(ctx, 9001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
                       val title = "R${m.round} (${m.time}) • ${m.fighterA} (${m.oddsA}) vs ${m.fighterB} (${m.oddsB})"
-                      val body = "${m.prediction} \vert{}${m.status}"
+                      val body = "${m.prediction} | ${m.status}"
                       val n = NotificationCompat.Builder(ctx, BAR_CH)
                           .setSmallIcon(android.R.drawable.ic_media_play)
                           .setContentTitle(title).setContentText(body)
-                          .setSubText("One UI Live Ticker • ${m.probA}\%/${m.probB}%")
+                          .setSubText("One UI Live Ticker • ${m.probA}%/${m.probB}%")
                           .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                           .setOngoing(true).setOnlyAlertOnce(true)
                           .setProgress(100, m.probA.coerceIn(0, 100), false)
                           .setContentIntent(pi).build()
-                      nm.notify(7001, n)
+                      nm.notify(9001, n)
                   } catch (_: Throwable) {}
               }
           }
@@ -389,7 +369,7 @@ jobs:
                           ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
                       }
                       val req = PeriodicWorkRequestBuilder<UfcRssWorker>(15, TimeUnit.MINUTES).build()
-                      WorkManager.getInstance(this).enqueueUniquePeriodicWork("ufc_rss_v7", ExistingPeriodicWorkPolicy.KEEP, req)
+                      WorkManager.getInstance(this).enqueueUniquePeriodicWork("ufc_rss_v9", ExistingPeriodicWorkPolicy.KEEP, req)
                   } catch (_: Throwable) {}
                   setContent {
                       MaterialTheme(darkColorScheme(primary = Color(0xFFD20A0A), background = Color(0xFF0A0A0C), surface = Color(0xFF16161B))) {
@@ -403,7 +383,7 @@ jobs:
               "1" -> m.copy(round = "2", time = "3:18", oddsA = "-185", oddsB = "+155", probA = 64, probB = 36, strikesA = m.strikesA + 18, strikesB = m.strikesB + 11, tdA = m.tdA + 1, status = "${m.fighterA} secures body-lock takedown against the cage.", prediction = "Live AI Pick: ${m.fighterA} via Dec/Sub (64% prob)")
               "2" -> m.copy(round = "3", time = "2:05", oddsA = "-290", oddsB = "+230", probA = 76, probB = 24, strikesA = m.strikesA + 24, strikesB = m.strikesB + 9, tdA = m.tdA + 1, status = "${m.fighterA} takes the back in R3 and threatens rear-naked choke.", prediction = "Live AI Pick: ${m.fighterA} Heavy Favorite via Sub/TKO (76% prob)")
               "3" -> m.copy(round = "4", time = "1:40", oddsA = "-450", oddsB = "+340", probA = 84, probB = 16, strikesA = m.strikesA + 21, strikesB = m.strikesB + 12, status = "${m.fighterA} ahead 30-27 on live scorecards entering championship rounds.", prediction = "Live AI Pick: ${m.fighterA} Decision Lock (84% prob)")
-              "4" -> m.copy(round = "FINAL", time = "5:00", oddsA = "-900", oddsB = "+600", probA = 95, probB = 5, status = "OFFICIAL RESULT: ${m.fighterA} def.${m.fighterB} via Unanimous Decision (49-46, 49-46, 48-47).", prediction = "Final Verified Result: ${m.fighterA} Winner")
+              "4" -> m.copy(round = "FINAL", time = "5:00", oddsA = "-900", oddsB = "+600", probA = 95, probB = 5, status = "OFFICIAL RESULT: ${m.fighterA} def. ${m.fighterB} via Unanimous Decision (49-46, 49-46, 48-47).", prediction = "Final Verified Result: ${m.fighterA} Winner")
               else -> m.copy(round = "1", time = "4:12", oddsA = "-155", oddsB = "+130", probA = 56, probB = 44, strikesA = 12, strikesB = 10, tdA = 0, tdB = 0, status = "Round 1 underway. Fighters trading calf kicks in center Octagon.", prediction = "Live AI Pick: Opening Round Toss-Up • ${m.fighterA} (56%)")
           }
 
@@ -518,9 +498,9 @@ jobs:
                           Column(Modifier.padding(16.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
                                   Text("● LIVE OCTAGON TRACKER", color = Color(0xFFFF4500), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                  Text("Round ${m.round} •${m.time}", color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+                                  Text("Round ${m.round} • ${m.time}", color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
                               }
-                              Text("${m.eventTitle} •${m.weightClass}", color = Color.Gray, fontSize = 12.sp)
+                              Text("${m.eventTitle} • ${m.weightClass}", color = Color.Gray, fontSize = 12.sp)
                               Spacer(Modifier.height(12.dp))
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                   Column(Modifier.weight(1f)) {
@@ -545,7 +525,7 @@ jobs:
                               Spacer(Modifier.height(12.dp))
                               Row(Modifier.fillMaxWidth().background(Color(0xFF1E1E26), RoundedCornerShape(8.dp)).padding(10.dp), Arrangement.SpaceBetween) {
                                   Text("Strikes: ${m.strikesA}", color = Color.White, fontSize = 12.sp)
-                                  Text("TD: ${m.tdA} -${m.tdB}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                  Text("TD: ${m.tdA} - ${m.tdB}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                   Text("Strikes: ${m.strikesB}", color = Color.White, fontSize = 12.sp)
                               }
                               Spacer(Modifier.height(12.dp))
@@ -587,4 +567,77 @@ jobs:
 
           @Composable
           fun EventsPane(list: List<UfcEvent>, filter: String) {
-              val filtered = list.filter { filter == "
+              val filtered = list.filter { filter == "ALL" || it.type == filter }
+              LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
+                  items(filtered) { ev ->
+                      Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(10.dp)) {
+                          Column(Modifier.padding(14.dp)) {
+                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                  Text(ev.type, color = if (ev.type == "PPV") Color(0xFFFFD700) else Color(0xFFD20A0A), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                                  Text(ev.localTime, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                              }
+                              Text(ev.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                              Text(ev.venue, color = Color.Gray, fontSize = 12.sp)
+                              Spacer(Modifier.height(8.dp))
+                              ev.bouts.forEach { b ->
+                                  Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
+                                      Text("• ${b.boutName}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                      Row(Modifier.fillMaxWidth().padding(start = 10.dp), Arrangement.SpaceBetween) {
+                                          Text("Odds: ${b.odds}", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                          Text(b.prediction, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          fun RosterPane(list: List<Fighter>, q: String, onQ: (String) -> Unit, div: String, onDiv: (String) -> Unit, cols: Int) {
+              val divs = listOf("ALL", "CHAMPS", "HW", "LHW", "MW", "WW", "LW", "FW", "BW", "FLW", "WMMA")
+              Column(Modifier.fillMaxSize()) {
+                  OutlinedTextField(q, onQ, label = { Text("Search fighter or division") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), singleLine = true)
+                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), Arrangement.spacedBy(6.dp)) {
+                      divs.forEach { d ->
+                          Button(onClick = { onDiv(d) }, colors = ButtonDefaults.buttonColors(containerColor = if (div == d) Color(0xFFD20A0A) else Color(0xFF22222A)), contentPadding = PaddingValues(10.dp, 2.dp)) {
+                              Text(d, fontSize = 11.sp, color = Color.White)
+                          }
+                      }
+                  }
+                  val filtered = list.filter { (it.name.contains(q, true) || it.division.contains(q, true)) && (div == "ALL" || (div == "CHAMPS" && it.isChamp) || it.code == div) }
+                  LazyVerticalGrid(GridCells.Fixed(cols), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
+                      items(filtered) { f ->
+                          Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(8.dp)) {
+                              Row(Modifier.fillMaxWidth().padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                  Column(Modifier.weight(1f)) {
+                                      Row(verticalAlignment = Alignment.CenterVertically) {
+                                          Text(f.name, color = Color(0xFFFFFFFF), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                          if (f.isChamp) {
+                                              Spacer(Modifier.width(6.dp))
+                                              Text("CHAMP", color = Color(0xFFFFD700), fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                          }
+                                      }
+                                      Text("${f.division} • Odds: ${f.odds}", color = Color.Gray, fontSize = 11.sp)
+                                  }
+                                  Column(horizontalAlignment = Alignment.End) {
+                                      Text(f.record, color = Color(0xFF4CAF50), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
+                                      Text("W - L - D", color = Color.Gray, fontSize = 9.sp)
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Compile Debug APK
+        run: gradle assembleDebug --no-daemon
+
+      - name: Upload Compiled APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: UFC-Pulse-Pro-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
