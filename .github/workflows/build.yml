@@ -57,8 +57,8 @@ jobs:
                   applicationId = "com.mma.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 31
-                  versionName = "20.1-BranDEAD-Pro"
+                  versionCode = 33
+                  versionName = "20.3-BranDEAD-Pro"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -335,6 +335,7 @@ jobs:
                       drawPath(path, color = Color(0xFFFF1744).copy(alpha = ecgGlow * 0.55f), style = Stroke(width = 4f + (ecgGlow * 7f), cap = StrokeCap.Round, join = StrokeJoin.Round))
                       drawPath(path, color = lerp(Color(0xFFFF1744), Color(0xFFFFD700), ecgGlow * 0.35f), style = Stroke(width = 3.5f + (ecgGlow * 2f), cap = StrokeCap.Round, join = StrokeJoin.Round))
                       val cur = Offset(pts[0].x + (pts[1].x - pts[0].x) * wavePhase, mid)
+                      // Corrected Color.White
                       drawCircle(color = Color.White, radius = 3.5f, center = cur)
                   }
                   Spacer(Modifier.width(10.dp))
@@ -506,7 +507,7 @@ jobs:
                                                   Text("${liveMatch.recordA} • ${liveMatch.oddsA}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                               }
                                               Box(Modifier.size(40.dp).clip(CircleShape).background(CrimsonGrad).border(1.5.dp, Color(0xFFFFD700), CircleShape), contentAlignment = Alignment.Center) {
-                                                  Text("VS", color = Color(0.White), fontSize = 13.sp, fontWeight = FontWeight.Black)
+                                                  Text("VS", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Black)
                                               }
                                               Column(Modifier.weight(1f).clickable { selFighter = roster.find { it.name.equals(liveMatch.fighterB, true) } ?: Fighter(name = liveMatch.fighterB, record = liveMatch.recordB) }, horizontalAlignment = Alignment.CenterHorizontally) {
                                                   FighterAvatar(liveMatch.fighterB, 82.dp, liveMatch.probB > liveMatch.probA)
