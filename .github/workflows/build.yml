@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > app/build.gradle.kts
           plugins { id("com.android.application") version "8.5.2"; id("org.jetbrains.kotlin.android") version "1.9.24" }
           android { namespace = "com.mma.pulse"; compileSdk = 35
-            defaultConfig { applicationId = "com.mma.pulse.pro"; minSdk = 26; targetSdk = 35; versionCode = 55; versionName = "23.0-Full" }
+            defaultConfig { applicationId = "com.mma.pulse.pro"; minSdk = 26; targetSdk = 35; versionCode = 61; versionName = "24.1-Full" }
             buildFeatures { compose = true }; composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
             compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
             kotlinOptions { jvmTarget = "17" } }
@@ -82,7 +82,6 @@ jobs:
           import androidx.compose.ui.graphics.drawscope.Stroke
           import androidx.compose.ui.layout.ContentScale
           import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.text.style.TextAlign
           import androidx.compose.ui.unit.dp
           import androidx.compose.ui.unit.sp
           import kotlinx.coroutines.*
@@ -168,7 +167,8 @@ jobs:
                 val groups = mutableListOf<RankingGroup>()
                 root.optJSONArray("items")?.let { items ->
                   for(i in 0 until items.length()) {
-                    val ref = items.getJSONObject(i).optString("\$ref")
+                    val item = items.getJSONObject(i)
+                    val ref = item.optString("\$ref", "")
                     if(ref.isBlank()) continue
                     try {
                       val rJson = JSONObject(URL(ref).readText())
@@ -330,7 +330,8 @@ jobs:
                 }
               }
             }
-          }@Composable fun Cards(onSelect:(Event)->Unit) {
+          }
+          @Composable fun Cards(onSelect:(Event)->Unit) {
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
               item { Text("UPCOMING UFC CARDS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp) }
               items(Repo.events.filter { !it.done }) { e ->
@@ -347,8 +348,7 @@ jobs:
                 }
               }
             }
-          }
-          @Composable fun EventDetail(event: Event) {
+          }@Composable fun EventDetail(event: Event) {
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
               item {
                 Text(event.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=20.sp)
@@ -403,7 +403,8 @@ jobs:
                 }
               }
             }
-          }@Composable fun Predict() {
+          }
+          @Composable fun Predict() {
             val upcoming = Repo.events.filter { !it.done }.flatMap { it.bouts }
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
               item { Text("PULSE AI PREDICTIONS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp) }
