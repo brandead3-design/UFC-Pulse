@@ -57,8 +57,8 @@ jobs:
                   applicationId = "com.mma.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 22
-                  versionName = "18.4-BranDEAD-Pro"
+                  versionCode = 23
+                  versionName = "19.0-BranDEAD-Pro"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -87,23 +87,10 @@ jobs:
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
-              <path
-                  android:fillColor="#080810"
-                  android:pathData="M0,0h108v108h-108z"/>
-              <path
-                  android:fillColor="#181224"
-                  android:strokeColor="#FF1744"
-                  android:strokeWidth="3.5"
-                  android:pathData="M36,12 L72,12 L96,36 L96,72 L72,96 L36,96 L12,72 L12,36 Z"/>
-              <path
-                  android:strokeColor="#FF1744"
-                  android:strokeWidth="5.5"
-                  android:strokeLineCap="round"
-                  android:strokeLineJoin="round"
-                  android:pathData="M20,54 L35,54 L43,30 L54,78 L65,24 L74,64 L81,54 L88,54"/>
-              <path
-                  android:fillColor="#FFD700"
-                  android:pathData="M65,19 C67.8,19 70,21.2 70,24 C70,26.8 67.8,29 65,29 C62.2,29 60,26.8 60,24 C60,21.2 62.2,19 65,19 Z"/>
+              <path android:fillColor="#080810" android:pathData="M0,0h108v108h-108z"/>
+              <path android:fillColor="#181224" android:strokeColor="#FF1744" android:strokeWidth="3.5" android:pathData="M36,12 L72,12 L96,36 L96,72 L72,96 L36,96 L12,72 L12,36 Z"/>
+              <path android:strokeColor="#FF1744" android:strokeWidth="5.5" android:strokeLineCap="round" android:strokeLineJoin="round" android:pathData="M20,54 L35,54 L43,30 L54,78 L65,24 L74,64 L81,54 L88,54"/>
+              <path android:fillColor="#FFD700" android:pathData="M65,19 C67.8,19 70,21.2 70,24 C70,26.8 67.8,29 65,29 C62.2,29 60,26.8 60,24 C60,21.2 62.2,19 65,19 Z"/>
           </vector>
           EOF
 
@@ -120,9 +107,7 @@ jobs:
                   android:supportsRtl="true"
                   android:usesCleartextTraffic="true"
                   android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
-                  <property
-                      android:name="android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE"
-                      android:value="false" />
+                  <property android:name="android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE" android:value="false" />
                   <activity
                       android:name=".MainActivity"
                       android:resizeableActivity="true"
@@ -194,34 +179,12 @@ jobs:
               val prediction: String, val isCompleted: Boolean, val officialResult: String
           )
           data class MmaEvent(val id: String, val title: String, val type: String, val localTime: String, val venue: String, val isCompleted: Boolean, val bouts: List<BoutDetail>)
-          data class PastFight(
-              val result: String, val opponent: String, val method: String,
-              val round: Int, val time: String, val event: String, val dateYear: String, val location: String
-          )
-          data class RoundStat(
-              val roundNum: Int, val scoreNote: String,
-              val sigA: Int, val sigAttA: Int, val sigB: Int, val sigAttB: Int,
-              val totA: Int, val totB: Int, val tdA: Int, val tdB: Int, val ctrlA: String, val ctrlB: String
-          )
-          data class UpcomingBooking(
-              val opponent: String, val eventTitle: String, val dateTime: String,
-              val venue: String, val weightClass: String, val placement: String, val liveOdds: String, val aiPick: String
-          )
-          data class FighterBio(
-              val nationality: String, val height: String, val reach: String,
-              val stance: String, val record: String, val nickname: String, val fights: List<PastFight>
-          )
-          data class Fighter(
-              val id: String, val name: String, val nickname: String, val division: String, val code: String,
-              val record: String, val nationality: String, val rankLabel: String, val isChamp: Boolean = false,
-              val mensP4p: Int = 0, val womensP4p: Int = 0, val headshotUrl: String = ""
-          )
-          data class LiveMatchState(
-              val eventTitle: String, val weightClass: String,
-              val fighterA: String, val recordA: String, val oddsA: String, val probA: Int,
-              val fighterB: String, val recordB: String, val oddsB: String, val probB: Int,
-              val round: String, val time: String, val status: String, val prediction: String, val isEventOver: Boolean
-          )
+          data class PastFight(val result: String, val opponent: String, val method: String, val round: Int, val time: String, val event: String, val dateYear: String, val location: String)
+          data class RoundStat(val roundNum: Int, val scoreNote: String, val sigA: Int, val sigAttA: Int, val sigB: Int, val sigAttB: Int, val totA: Int, val totB: Int, val tdA: Int, val tdB: Int, val ctrlA: String, val ctrlB: String)
+          data class UpcomingBooking(val opponent: String, val eventTitle: String, val dateTime: String, val venue: String, val weightClass: String, val placement: String, val liveOdds: String, val aiPick: String)
+          data class FighterBio(val nationality: String, val height: String, val reach: String, val stance: String, val record: String, val nickname: String, val fights: List<PastFight>)
+          data class Fighter(val id: String, val name: String, val nickname: String, val division: String, val code: String, val record: String, val nationality: String, val rankLabel: String, val isChamp: Boolean = false, val mensP4p: Int = 0, val womensP4p: Int = 0, val headshotUrl: String = "")
+          data class LiveMatchState(val eventTitle: String, val weightClass: String, val fighterA: String, val recordA: String, val oddsA: String, val probA: Int, val fighterB: String, val recordB: String, val oddsB: String, val probB: Int, val round: String, val time: String, val status: String, val prediction: String, val isEventOver: Boolean)
 
           val CardGrad = Brush.linearGradient(listOf(Color(0xFF1E1E2E), Color(0xFF12121C)))
           val HeroGrad = Brush.linearGradient(listOf(Color(0xFF32121F), Color(0xFF171526), Color(0xFF10101A)))
@@ -233,23 +196,17 @@ jobs:
           fun flagFor(nat: String): String {
               val n = nat.lowercase()
               return when {
-                  n.contains("ireland") || n.contains("irish") || n.contains("dublin") -> "🇮🇪"
-                  n.contains("united states") || n.contains("usa") || n.contains("american") -> "🇺🇸"
+                  n.contains("ireland") || n.contains("irish") -> "🇮🇪"
+                  n.contains("united states") || n.contains("usa") -> "🇺🇸"
                   n.contains("brazil") -> "🇧🇷"
                   n.contains("russia") || n.contains("dagestan") -> "🇷🇺"
                   n.contains("australia") -> "🇦🇺"
-                  n.contains("england") || n.contains("united kingdom") || n.contains("uk") || n.contains("scotland") -> "🇬🇧"
+                  n.contains("england") || n.contains("uk") -> "🇬🇧"
                   n.contains("france") -> "🇫🇷"
                   n.contains("georgia") -> "🇬🇪"
                   n.contains("spain") -> "🇪🇸"
                   n.contains("mexico") -> "🇲🇽"
                   n.contains("china") -> "🇨🇳"
-                  n.contains("new zealand") -> "🇳🇿"
-                  n.contains("nigeria") -> "🇳🇬"
-                  n.contains("canada") -> "🇨🇦"
-                  n.contains("poland") -> "🇵🇱"
-                  n.contains("czech") -> "🇨🇿"
-                  n.contains("kyrgyz") -> "🇰🇬"
                   else -> "🌐"
               }
           }
@@ -259,8 +216,7 @@ jobs:
           }
 
           fun fmtLocal(utcIso: String): String = try {
-              ZonedDateTime.parse(utcIso).withZoneSameInstant(ZoneId.systemDefault())
-                  .format(DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a z", Locale.getDefault()))
+              ZonedDateTime.parse(utcIso).withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a z", Locale.getDefault()))
           } catch (_: Throwable) { utcIso.take(10) }
 
           fun inferVenue(ev: String, wikiLoc: String = ""): String {
@@ -269,12 +225,10 @@ jobs:
               return when {
                   e.contains("vegas") || e.contains("apex") -> "Meta APEX, Las Vegas, NV, USA"
                   e.contains("paris") -> "Accor Arena, Paris, France"
-                  e.contains("abu dhabi") || e.contains("308") || e.contains("294") || e.contains("321") -> "Etihad Arena, Abu Dhabi, UAE"
-                  e.contains("london") || e.contains("286") -> "The O2 Arena, London, UK"
-                  e.contains("riyadh") || e.contains("saudi") -> "anb Arena, Riyadh, Saudi Arabia"
-                  e.contains("doha") || e.contains("qatar") -> "ABHA Arena, Doha, Qatar"
-                  e.contains("300") || e.contains("310") || e.contains("313") || e.contains("317") || e.contains("335") || e.contains("264") -> "T-Mobile Arena, Las Vegas, NV, USA"
-                  e.contains("309") || e.contains("295") || e.contains("322") || e.contains("334") || e.contains("205") -> "Madison Square Garden, New York, USA"
+                  e.contains("abu dhabi") -> "Etihad Arena, Abu Dhabi, UAE"
+                  e.contains("london") -> "The O2 Arena, London, UK"
+                  e.contains("300") || e.contains("310") || e.contains("335") -> "T-Mobile Arena, Las Vegas, NV, USA"
+                  e.contains("309") || e.contains("334") -> "Madison Square Garden, New York, USA"
                   e.contains("dublin") -> "3Arena, Dublin, Ireland"
                   else -> "Official Octagon Arena"
               }
@@ -302,11 +256,7 @@ jobs:
                   val probB = 100 - probA
                   val pick = if (probA >= probB) fighterA else fighterB
                   val best = maxOf(probA, probB)
-                  val method = when {
-                      best >= 68 && (weightClass.contains("Heavy", true) || weightClass.contains("Middle", true)) -> "KO/TKO"
-                      best >= 65 -> "TKO or Submission"
-                      else -> "Decision / Late Finish"
-                  }
+                  val method = if (best >= 68 && weightClass.contains("Heavy", true)) "KO/TKO" else "Decision / Late Finish"
                   return Triple(probA, probB, "Pulse AI v2: $pick via $method ($best%)")
               }
 
@@ -314,63 +264,20 @@ jobs:
                   val totalRounds = if (b.placement == "MAIN EVENT" || b.weightClass.contains("Title", true)) 5 else 3
                   val favIsA = b.probA >= b.probB
                   val favName = if (favIsA) b.fighterA else b.fighterB
-                  val dogName = if (favIsA) b.fighterB else b.fighterA
-                  val bestProb = maxOf(b.probA, b.probB)
-                  val seed = abs((b.fighterA + b.fighterB + b.weightClass).hashCode())
-                  val finishRound = if (bestProb >= 70) (totalRounds - 1).coerceAtLeast(2) else 0
-
+                  val seed = abs((b.fighterA + b.fighterB).hashCode())
                   return (1..totalRounds).map { r ->
-                      val dogWinsSwingRound = (r == 2 && bestProb < 64)
-                      val aWinsRd = if (dogWinsSwingRound) !favIsA else favIsA
-                      val sigA = (if (aWinsRd) 21 else 15) + ((seed + r * 5) % 10)
-                      val sigB = (if (!aWinsRd) 20 else 14) + ((seed + r * 9) % 10)
-                      val attA = sigA + 18 + ((seed + r * 3) % 12)
-                      val attB = sigB + 19 + ((seed + r * 7) % 12)
-                      val tdA = if (aWinsRd && (seed + r) % 2 == 0) 1 + ((seed + r) % 2) else 0
-                      val tdB = if (!aWinsRd && (seed + r) % 2 == 1) 1 else 0
-                      val cSecA = if (aWinsRd) 85 + ((seed + r * 17) % 70) else 40 + ((seed + r * 11) % 45)
-                      val cSecB = (230 - cSecA).coerceAtLeast(20)
-                      val note = when {
-                          finishRound > 0 && r == finishRound -> "AI FINISH WINDOW: $favName via TKO/Sub"
-                          finishRound > 0 && r > finishRound -> "If Distance: 10 - 9 $favName"
-                          dogWinsSwingRound -> "Projected 10 - 9 $dogName (Swing Rd)"
-                          else -> "Projected 10 - 9 $favName"
-                      }
-                      RoundStat(
-                          r, note, sigA, attA, sigB, attB, sigA + 9, sigB + 8, tdA, tdB,
-                          "${cSecA / 60}:${(cSecA % 60).toString().padStart(2, '0')}",
-                          "${cSecB / 60}:${(cSecB % 60).toString().padStart(2, '0')}"
-                      )
+                      val sigA = 18 + ((seed + r * 5) % 10)
+                      val sigB = 16 + ((seed + r * 9) % 10)
+                      RoundStat(r, "Projected 10 - 9 $favName", sigA, sigA + 12, sigB, sigB + 12, sigA + 8, sigB + 7, 1, 0, "1:30", "0:45")
                   }
               }
 
               fun buildRoundStats(fighter: String, pf: PastFight): List<RoundStat> {
                   val rMax = pf.round.coerceIn(1, 5)
                   val isWin = pf.result == "WIN"
-                  val isKo = pf.method.contains("KO", true) || pf.method.contains("TKO", true)
-                  val isSub = pf.method.contains("SUB", true)
-                  val seed = abs((fighter + pf.opponent + pf.event + pf.dateYear).hashCode())
                   return (1..rMax).map { r ->
-                      val isFinalFinish = (r == rMax) && (isKo || isSub)
-                      val baseA = 15 + ((seed + r * 7) % 19) + (if (isWin) 7 else 0)
-                      val baseB = 13 + ((seed + r * 11) % 17) + (if (!isWin) 7 else 0)
-                      val attA = baseA + 14 + ((seed + r * 3) % 15)
-                      val attB = baseB + 15 + ((seed + r * 5) % 15)
-                      val tdA = if (isSub && isWin && r == rMax) 2 else ((seed + r) % 3)
-                      val tdB = if (isSub && !isWin && r == rMax) 2 else ((seed + r * 2) % 2)
-                      val cSecA = if (isWin) 92 + ((seed + r * 19) % 88) else 34 + ((seed + r * 13) % 58)
-                      val cSecB = (240 - cSecA).coerceAtLeast(15)
-                      val note = when {
-                          isFinalFinish -> "STOPPAGE (${pf.method} • ${pf.time})"
-                          isWin -> "10 - 9 $fighter"
-                          pf.result == "LOSS" -> "10 - 9 ${pf.opponent}"
-                          else -> "10 - 10 Even"
-                      }
-                      RoundStat(
-                          r, note, baseA, attA, baseB, attB, baseA + 8, baseB + 7, tdA, tdB,
-                          "${cSecA / 60}:${(cSecA % 60).toString().padStart(2, '0')}",
-                          "${cSecB / 60}:${(cSecB % 60).toString().padStart(2, '0')}"
-                      )
+                      val note = if (r == rMax) "STOPPAGE (${pf.method})" else if (isWin) "10 - 9 $fighter" else "10 - 9 ${pf.opponent}"
+                      RoundStat(r, note, 18, 28, 15, 26, 22, 19, 1, 0, "1:10", "0:50")
                   }
               }
           }
@@ -402,20 +309,11 @@ jobs:
                       if (foundTop) break
                   }
                   val visH = (h - topY).coerceAtLeast(32)
-                  val box = when {
-                      h > (w * 1.15f) -> (visH * 0.33f).toInt()
-                      w > (h * 1.15f) -> (visH * 0.74f).toInt()
-                      else -> (visH * 0.68f).toInt()
-                  }.coerceIn(40, minOf(w, h))
-                  val sampleY = (topY + (box * 0.35f).toInt()).coerceIn(0, h - 1)
-                  var sumX = 0L; var cntX = 0
-                  for (x in 0 until w step 4) {
-                      if (((src.getPixel(x, sampleY) ushr 24) and 0xFF) > 45) { sumX += x; cntX++ }
-                  }
-                  val cx = if (cntX > 4) (sumX / cntX).toInt() else (w / 2)
-                  val cropX = (cx - (box / 2)).coerceIn(0, (w - box).coerceAtLeast(0))
-                  val cropY = (topY - (box * 0.08f).toInt()).coerceIn(0, (h - box).coerceAtLeast(0))
-                  return Bitmap.createBitmap(src, cropX, cropY, box, box)
+                  val box = if (h > (w * 1.15f)) (visH * 0.33f).toInt() else (visH * 0.68f).toInt()
+                  val boxSize = box.coerceIn(40, minOf(w, h))
+                  val cropX = ((w / 2) - (boxSize / 2)).coerceIn(0, (w - boxSize).coerceAtLeast(0))
+                  val cropY = (topY - (boxSize * 0.08f).toInt()).coerceIn(0, (h - boxSize).coerceAtLeast(0))
+                  return Bitmap.createBitmap(src, cropX, cropY, boxSize, boxSize)
               }
 
               suspend fun load(name: String): ImageBitmap? = withContext(Dispatchers.IO) {
@@ -430,8 +328,6 @@ jobs:
                           val it = JSONObject(c.inputStream.bufferedReader().use { r -> r.readText() }).optJSONArray("items")?.optJSONObject(0)
                           val pid = it?.optString("id") ?: ""
                           if (pid.isNotBlank()) urls.add("https://a.espncdn.com/i/headshots/mma/players/full/$pid.png")
-                          val img = it?.optJSONObject("image")?.optString("default") ?: ""
-                          if (img.isNotBlank()) urls.add(img)
                       }
                       c.disconnect()
                   } catch (_: Throwable) {}
@@ -474,18 +370,8 @@ jobs:
           @Composable
           fun AnimatedMmaPulseLogo() {
               val inf = rememberInfiniteTransition(label = "ecg_line_pulse")
-              val ecgGlow by inf.animateFloat(
-                  initialValue = 0.25f,
-                  targetValue = 1.0f,
-                  animationSpec = infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-                  label = "ecg_glow"
-              )
-              val wavePhase by inf.animateFloat(
-                  initialValue = 0f,
-                  targetValue = 1f,
-                  animationSpec = infiniteRepeatable(tween(1350, easing = LinearEasing), RepeatMode.Restart),
-                  label = "ecg_wave"
-              )
+              val ecgGlow by inf.animateFloat(0.25f, 1.0f, infiniteRepeatable(tween(650, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "glow")
+              val wavePhase by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(1350, easing = LinearEasing), RepeatMode.Restart), label = "wave")
 
               Row(
                   verticalAlignment = Alignment.CenterVertically,
@@ -498,31 +384,12 @@ jobs:
               ) {
                   Canvas(modifier = Modifier.size(44.dp, 22.dp)) {
                       val w = size.width; val h = size.height; val mid = h / 2f
-                      val pts = listOf(
-                          Offset(0f, mid),
-                          Offset(w * 0.18f, mid),
-                          Offset(w * 0.30f, h * 0.14f),
-                          Offset(w * 0.44f, h * 0.88f),
-                          Offset(w * 0.58f, h * 0.05f),
-                          Offset(w * 0.72f, h * 0.78f),
-                          Offset(w * 0.84f, mid),
-                          Offset(w, mid)
-                      )
-                      val path = Path().apply {
-                          moveTo(pts.first().x, pts.first().y)
-                          pts.drop(1).forEach { lineTo(it.x, it.y) }
-                      }
+                      val pts = listOf(Offset(0f, mid), Offset(w * 0.18f, mid), Offset(w * 0.30f, h * 0.14f), Offset(w * 0.44f, h * 0.88f), Offset(w * 0.58f, h * 0.05f), Offset(w * 0.72f, h * 0.78f), Offset(w * 0.84f, mid), Offset(w, mid))
+                      val path = Path().apply { moveTo(pts.first().x, pts.first().y); pts.drop(1).forEach { lineTo(it.x, it.y) } }
                       drawPath(path, color = Color(0xFFFF1744).copy(alpha = ecgGlow * 0.55f), style = Stroke(width = 4f + (ecgGlow * 7f), cap = StrokeCap.Round, join = StrokeJoin.Round))
                       drawPath(path, color = lerp(Color(0xFFFF1744), Color(0xFFFFD700), ecgGlow * 0.35f), style = Stroke(width = 3.5f + (ecgGlow * 2f), cap = StrokeCap.Round, join = StrokeJoin.Round))
-
                       val segCount = pts.size - 1
-                      val exactPos = wavePhase * segCount
-                      val idx = exactPos.toInt().coerceIn(0, segCount - 1)
-                      val frac = exactPos - idx
-                      val p1 = pts[idx]; val p2 = pts[idx + 1]
-                      val cur = Offset(p1.x + (p2.x - p1.x) * frac, p1.y + (p2.y - p1.y) * frac)
-                      drawLine(color = Color(0xFFFFD700), start = p1, end = cur, strokeWidth = 5.5f, cap = StrokeCap.Round)
-                      drawCircle(color = Color(0xFFFFD700).copy(alpha = 0.45f), radius = 8f, center = cur)
+                      val cur = Offset(pts[0].x + (pts[1].x - pts[0].x) * wavePhase, mid)
                       drawCircle(color = Color.White, radius = 3.5f, center = cur)
                   }
                   Spacer(Modifier.width(10.dp))
@@ -536,25 +403,12 @@ jobs:
               private val VERIFIED_STARS = listOf(
                   Fighter("3022677", "Conor McGregor", "The Notorious", "Lightweight / Welterweight", "LW", "22-6-0", "Ireland", "Former 2-Div Champ", false),
                   Fighter("4875658", "Ian Machado Garry", "The Future", "Welterweight", "WW", "16-1-0", "Ireland", "#6 WW", false),
-                  Fighter("5150050", "Paul Hughes", "Big News", "Lightweight", "LW", "14-2-0", "Ireland", "LW Contender", false),
-                  Fighter("4685747", "Caolan Loughran", "The Don", "Bantamweight", "BW", "10-2-0", "Ireland", "BW Roster", false),
-                  Fighter("5092397", "Shauna Bannon", "Mama B", "Women's Strawweight", "WMMA", "7-1-0", "Ireland", "SW Roster", false),
-                  Fighter("2335639", "Jon Jones", "Bones", "Heavyweight", "HW", "28-1-0", "United States", "GOAT / HW", true),
                   Fighter("3332412", "Islam Makhachev", "The Eagle's Heir", "Welterweight / LW", "WW", "29-1-0", "Russia", "#1 Men's P4P", true, mensP4p = 1),
-                  Fighter("3949584", "Alexander Volkanovski", "The Great", "Featherweight", "FW", "29-4-0", "Australia", "#2 Men's P4P", true, mensP4p = 2),
-                  Fighter("3022345", "Justin Gaethje", "The Highlight", "Lightweight", "LW", "27-5-0", "United States", "#3 Men's P4P", true, mensP4p = 3),
-                  Fighter("4350812", "Ilia Topuria", "El Matador", "Lightweight", "LW", "16-1-0", "Georgia / Spain", "#7 Men's P4P", false, mensP4p = 7),
-                  Fighter("2504169", "Charles Oliveira", "Do Bronx", "Lightweight (BMF)", "LW", "37-11-0", "Brazil", "BMF Champion", true),
-                  Fighter("4705658", "Alex Pereira", "Poatan", "Heavyweight / LHW", "HW", "13-4-0", "Brazil", "Former 2-Div Champ", false),
-                  Fighter("3153124", "Max Holloway", "Blessed", "Lightweight / FW", "LW", "27-8-0", "United States", "LW / FW Contender", false),
-                  Fighter("2506549", "Dustin Poirier", "The Diamond", "Lightweight", "LW", "30-9-0", "United States", "LW Legend", false)
+                  Fighter("3949584", "Alexander Volkanovski", "The Great", "Featherweight", "FW", "29-4-0", "Australia", "#2 Men's P4P", true, mensP4p = 2)
               )
 
               private fun httpGet(u: String): String = try {
-                  val c = (URL(u).openConnection() as HttpURLConnection).apply {
-                      instanceFollowRedirects = true; connectTimeout = 7000; readTimeout = 7000
-                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 17; SM-F971B) Chrome/131.0.0.0 Mobile")
-                  }
+                  val c = (URL(u).openConnection() as HttpURLConnection).apply { instanceFollowRedirects = true; connectTimeout = 6000; readTimeout = 6000; setRequestProperty("User-Agent", "Mozilla/5.0") }
                   if (c.responseCode in 200..299) c.inputStream.bufferedReader().use { it.readText() } else ""
               } catch (_: Throwable) { "" }
 
@@ -574,27 +428,17 @@ jobs:
                   }
               }
 
-              private fun compMatchesEventTitle(comp: JSONObject, evTitle: String): Boolean {
-                  val c = comp.optJSONArray("competitors") ?: return false
-                  val n1 = c.optJSONObject(0)?.optJSONObject("athlete")?.optString("displayName") ?: ""
-                  val n2 = c.optJSONObject(1)?.optJSONObject("athlete")?.optString("displayName") ?: ""
-                  val l1 = n1.substringAfterLast(" ").trim()
-                  val l2 = n2.substringAfterLast(" ").trim()
-                  return (l1.length > 2 && evTitle.contains(l1, true)) || (l2.length > 2 && evTitle.contains(l2, true))
-              }
-
               fun orderCompsMainEventFirst(rawComps: List<JSONObject>, evTitle: String): List<JSONObject> {
                   if (rawComps.size <= 1) return rawComps
-                  val firstMatches = compMatchesEventTitle(rawComps.first(), evTitle)
-                  val lastMatches = compMatchesEventTitle(rawComps.last(), evTitle)
-                  val base = if (firstMatches && !lastMatches) rawComps else rawComps.reversed()
-                  val mainIdx = base.indexOfFirst { compMatchesEventTitle(it, evTitle) }
-                  return if (mainIdx > 0) {
-                      val mu = base.toMutableList()
-                      val mainComp = mu.removeAt(mainIdx)
-                      mu.add(0, mainComp)
-                      mu
-                  } else base
+                  val main = rawComps.find { c ->
+                      val n = c.optJSONArray("competitors")
+                      val n1 = n?.optJSONObject(0)?.optJSONObject("athlete")?.optString("displayName") ?: ""
+                      evTitle.contains(n1.substringAfterLast(" "), true)
+                  } ?: rawComps.last()
+                  val mu = rawComps.toMutableList()
+                  mu.remove(main)
+                  mu.add(0, main)
+                  return mu
               }
 
               private fun parseCompetitionToBout(comp: JSONObject, idx: Int, total: Int): BoutDetail? {
@@ -602,50 +446,26 @@ jobs:
                   if (competitors.length() < 2) return null
                   val c1 = competitors.getJSONObject(0); val c2 = competitors.getJSONObject(1)
                   val a1 = c1.optJSONObject("athlete"); val a2 = c2.optJSONObject("athlete")
-                  val n1 = a1?.optString("displayName")?.takeIf { it.isNotBlank() } ?: "Fighter A"
-                  val n2 = a2?.optString("displayName")?.takeIf { it.isNotBlank() } ?: "Fighter B"
+                  val n1 = a1?.optString("displayName") ?: "Fighter A"
+                  val n2 = a2?.optString("displayName") ?: "Fighter B"
                   val id1 = a1?.optString("id") ?: ""; val id2 = a2?.optString("id") ?: ""
-                  FaceImageLoader.registerHint(n1, id1, a1?.optJSONObject("headshot")?.optString("href") ?: "")
-                  FaceImageLoader.registerHint(n2, id2, a2?.optJSONObject("headshot")?.optString("href") ?: "")
+                  FaceImageLoader.registerHint(n1, id1); FaceImageLoader.registerHint(n2, id2)
 
                   val r1 = c1.optJSONArray("records")?.optJSONObject(0)?.optString("summary") ?: "12-3-0"
                   val r2 = c2.optJSONArray("records")?.optJSONObject(0)?.optString("summary") ?: "11-4-0"
-                  val wc = comp.optJSONObject("type")?.optString("text")?.takeIf { it.isNotBlank() } ?: "MMA Bout"
-                  val placement = when {
-                      idx == 0 -> "MAIN EVENT"
-                      idx == 1 -> "CO-MAIN EVENT"
-                      idx < 5 -> "MAIN CARD"
-                      idx >= total - 3 && total > 8 -> "EARLY PRELIMS"
-                      else -> "PRELIMS"
-                  }
-                  val st = comp.optJSONObject("status")
-                  val stType = st?.optJSONObject("type")
-                  val completed = stType?.optBoolean("completed", false) ?: false
-                  val detail = stType?.optString("detail") ?: "Scheduled"
-                  val rd = st?.optInt("period", 3) ?: 3
-                  val clk = st?.optString("displayClock", "5:00") ?: "5:00"
-                  val w1 = c1.optBoolean("winner", false); val w2 = c2.optBoolean("winner", false)
-
-                  val oddsStr = comp.optJSONArray("odds")?.optJSONObject(0)?.optString("details")?.takeIf { it.isNotBlank() } ?: "Live Line Even"
+                  val wc = comp.optJSONObject("type")?.optString("text") ?: "MMA Bout"
+                  val placement = if (idx == 0) "MAIN EVENT" else if (idx == 1) "CO-MAIN EVENT" else "MAIN CARD"
+                  val oddsStr = comp.optJSONArray("odds")?.optJSONObject(0)?.optString("details") ?: "Live Line Even"
                   val (pA, pB, aiText) = PulseAiEngine.analyzeBout(n1, r1, n2, r2, oddsStr, wc)
-                  val official = when {
-                      w1 -> "WINNER: $n1 ($detail • R$rd $clk)"
-                      w2 -> "WINNER: $n2 ($detail • R$rd $clk)"
-                      completed -> "Official Result: $detail"
-                      else -> ""
-                  }
-                  return BoutDetail(wc, placement, n1, r1, id1, n2, r2, id2, oddsStr, pA, pB, aiText, completed, official)
+                  return BoutDetail(wc, placement, n1, r1, id1, n2, r2, id2, oddsStr, pA, pB, aiText, false, "")
               }
 
               fun findConfirmedUpcomingBout(fighterName: String, events: List<MmaEvent>): UpcomingBooking? {
-                  val target = fighterName.trim().lowercase()
-                  val last = target.substringAfterLast(" ")
+                  val last = fighterName.trim().lowercase().substringAfterLast(" ")
                   for (ev in events.filter { !it.isCompleted }) {
                       for (b in ev.bouts) {
-                          val aMatch = b.fighterA.equals(fighterName, true) || (last.length > 3 && b.fighterA.lowercase().endsWith(last))
-                          val bMatch = b.fighterB.equals(fighterName, true) || (last.length > 3 && b.fighterB.lowercase().endsWith(last))
-                          if (aMatch || bMatch) {
-                              val opp = if (aMatch) "${b.fighterB} (${b.recordB})" else "${b.fighterA} (${b.recordA})"
+                          if (b.fighterA.lowercase().contains(last) || b.fighterB.lowercase().contains(last)) {
+                              val opp = if (b.fighterA.equals(fighterName, true)) b.fighterB else b.fighterA
                               return UpcomingBooking(opp, ev.title, ev.localTime, ev.venue, b.weightClass, b.placement, b.liveOdds, b.prediction)
                           }
                       }
@@ -655,320 +475,46 @@ jobs:
 
               suspend fun syncAllMmaData(): Triple<LiveMatchState, List<MmaEvent>, List<Fighter>> = withContext(Dispatchers.IO) {
                   val rosterMap = LinkedHashMap<String, Fighter>()
-                  VERIFIED_STARS.forEach { s ->
-                      FaceImageLoader.registerHint(s.name, s.id)
-                      rosterMap[s.name.lowercase()] = s
-                  }
+                  VERIFIED_STARS.forEach { rosterMap[it.name.lowercase()] = it }
                   val eventsList = mutableListOf<MmaEvent>()
-                  var liveOrRecentMatch: LiveMatchState? = null
-                  var nextPreviewMatch: LiveMatchState? = null
 
                   try {
-                      val rkJson = httpGet("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/rankings")
-                      if (rkJson.isNotBlank()) {
-                          val groups = JSONObject(rkJson).optJSONArray("rankings")
-                          if (groups != null) {
-                              for (i in 0 until groups.length()) {
-                                  val g = groups.getJSONObject(i)
-                                  val gName = g.optString("name", "")
-                                  val isMensP4p = gName.contains("Men's Pound", true) || (gName.contains("Pound", true) && !gName.contains("Women", true))
-                                  val isWomensP4p = gName.contains("Women's Pound", true)
-                                  val divCode = mapDivCode(gName)
-                                  val ranks = g.optJSONArray("ranks") ?: continue
-                                  for (j in 0 until ranks.length()) {
-                                      val rObj = ranks.getJSONObject(j)
-                                      val rankNum = rObj.optInt("current", j + 1)
-                                      val rec = rObj.optString("recordSummary", "18-3-0")
-                                      val ath = rObj.optJSONObject("athlete") ?: continue
-                                      val id = ath.optString("id", "")
-                                      val name = ath.optString("displayName", "").trim()
-                                      if (name.isBlank()) continue
-                                      val nick = ath.optString("nickname", "MMA Pro")
-                                      val nat = ath.optJSONObject("flag")?.optString("alt")
-                                          ?: ath.optString("citizenship", "").takeIf { it.isNotBlank() }
-                                          ?: rosterMap[name.lowercase()]?.nationality
-                                          ?: "UFC Roster"
-                                      val head = ath.optJSONObject("headshot")?.optString("href") ?: ""
-                                      FaceImageLoader.registerHint(name, id, head)
-                                      val ex = rosterMap[name.lowercase()]
-                                      if (ex != null) {
-                                          rosterMap[name.lowercase()] = ex.copy(
-                                              id = id.ifBlank { ex.id },
-                                              record = if (rec != "0-0-0") rec else ex.record,
-                                              nationality = if (nat != "UFC Roster") nat else ex.nationality,
-                                              mensP4p = if (isMensP4p) rankNum else ex.mensP4p,
-                                              womensP4p = if (isWomensP4p) rankNum else ex.womensP4p,
-                                              division = if (!isMensP4p && !isWomensP4p) gName else ex.division,
-                                              code = if (!isMensP4p && !isWomensP4p) divCode else ex.code,
-                                              rankLabel = if (!isMensP4p && !isWomensP4p) "#$rankNum $divCode" else ex.rankLabel,
-                                              isChamp = ex.isChamp || (!isMensP4p && !isWomensP4p && rankNum == 0)
-                                          )
-                                      } else {
-                                          rosterMap[name.lowercase()] = Fighter(
-                                              id, name, nick, if (isMensP4p || isWomensP4p) "Pound-for-Pound" else gName,
-                                              if (isMensP4p) "LW" else if (isWomensP4p) "WMMA" else divCode,
-                                              rec, nat, if (isMensP4p) "#$rankNum Men's P4P" else if (isWomensP4p) "#$rankNum Women's P4P" else "#$rankNum $divCode",
-                                              rankNum == 0, if (isMensP4p) rankNum else 0, if (isWomensP4p) rankNum else 0, head
-                                          )
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  } catch (_: Throwable) {}
-
-                  try {
-                      val fmt = DateTimeFormatter.ofPattern("yyyyMMdd")
-                      val start = LocalDate.now().minusDays(120).format(fmt)
-                      val end = LocalDate.now().plusDays(95).format(fmt)
+                      val start = LocalDate.now().minusDays(30).format(DateTimeFormatter.ofPattern("yyyyMMdd"))
+                      val end = LocalDate.now().plusDays(60).format(DateTimeFormatter.ofPattern("yyyyMMdd"))
                       val sbJson = httpGet("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard?dates=$start-$end")
                       if (sbJson.isNotBlank()) {
                           val evArr = JSONObject(sbJson).optJSONArray("events")
                           if (evArr != null) {
-                              val recentCutoff = LocalDate.now().minusDays(7)
                               for (i in 0 until evArr.length()) {
                                   val ev = evArr.getJSONObject(i)
-                                  val evId = ev.optString("id", "$i")
                                   val evName = ev.optString("name", "MMA Event")
-                                  val evDateStr = ev.optString("date", "")
-                                  val evLocalDate = try { LocalDate.parse(evDateStr.take(10)) } catch (_: Throwable) { LocalDate.now() }
-                                  val isCompleted = ev.optJSONObject("status")?.optJSONObject("type")?.optBoolean("completed", false) ?: evLocalDate.isBefore(LocalDate.now())
-
                                   val comps = ev.optJSONArray("competitions") ?: continue
                                   val rawComps = mutableListOf<JSONObject>()
                                   for (j in 0 until comps.length()) rawComps.add(comps.getJSONObject(j))
-
-                                  for (comp in rawComps) {
-                                      val wc = comp.optJSONObject("type")?.optString("text") ?: "Lightweight"
-                                      val dCode = mapDivCode(wc)
-                                      val cArr = comp.optJSONArray("competitors") ?: continue
-                                      for (k in 0 until cArr.length()) {
-                                          val cObj = cArr.getJSONObject(k)
-                                          val ath = cObj.optJSONObject("athlete") ?: continue
-                                          val fName = ath.optString("displayName", "").trim()
-                                          if (fName.isBlank()) continue
-                                          val fId = ath.optString("id", "")
-                                          val fNat = ath.optJSONObject("flag")?.optString("alt")
-                                              ?: ath.optString("citizenship", "").takeIf { it.isNotBlank() }
-                                              ?: rosterMap[fName.lowercase()]?.nationality
-                                              ?: "UFC Roster"
-                                          val fRec = cObj.optJSONArray("records")?.optJSONObject(0)?.optString("summary") ?: "14-4-0"
-                                          FaceImageLoader.registerHint(fName, fId, ath.optJSONObject("headshot")?.optString("href") ?: "")
-                                          if (!rosterMap.containsKey(fName.lowercase())) {
-                                              rosterMap[fName.lowercase()] = Fighter(fId, fName, "Active Pro", wc, dCode, fRec, fNat, dCode)
-                                          }
-                                      }
-                                  }
-
-                                  if (evLocalDate.isBefore(recentCutoff)) continue
-                                  val orderedComps = orderCompsMainEventFirst(rawComps, evName)
-                                  val bouts = orderedComps.mapIndexedNotNull { idx, c -> parseCompetitionToBout(c, idx, orderedComps.size) }
-                                  val venue = orderedComps.firstOrNull()?.optJSONObject("venue")?.optString("fullName") ?: inferVenue(evName)
-                                  val evType = when {
-                                      isCompleted -> "COMPLETED"
-                                      evName.contains(Regex("UFC \\d+")) -> "PPV"
-                                      else -> "FIGHT NIGHT"
-                                  }
+                                  val ordered = orderCompsMainEventFirst(rawComps, evName)
+                                  val bouts = ordered.mapIndexedNotNull { idx, c -> parseCompetitionToBout(c, idx, ordered.size) }
                                   if (bouts.isNotEmpty()) {
-                                      val eventObj = MmaEvent(
-                                          id = evId, title = evName, type = evType,
-                                          localTime = if (isCompleted) "COMPLETED • ${evDateStr.take(10)} (${bouts.size} Bouts)" else "${fmtLocal(evDateStr)} • ${bouts.size} Bouts",
-                                          venue = venue, isCompleted = isCompleted, bouts = bouts
-                                      )
-                                      eventsList.add(eventObj)
-                                      val main = bouts.first()
-                                      if (isCompleted) {
-                                          liveOrRecentMatch = LiveMatchState(
-                                              evName, "${main.weightClass} • MAIN EVENT FINAL",
-                                              main.fighterA, main.recordA, main.liveOdds, if (main.officialResult.contains(main.fighterA)) 100 else 0,
-                                              main.fighterB, main.recordB, "Final", if (main.officialResult.contains(main.fighterB)) 100 else 0,
-                                              "FINAL", "Official", main.officialResult.ifBlank { "Event Concluded" },
-                                              "Event Completed • Live Predictions Locked", true
-                                          )
-                                      } else if (nextPreviewMatch == null) {
-                                          nextPreviewMatch = LiveMatchState(
-                                              evName, "${main.weightClass} • MAIN EVENT (5 RDS)",
-                                              main.fighterA, main.recordA, main.liveOdds, main.probA,
-                                              main.fighterB, main.recordB, "Live Line", main.probB,
-                                              "PRE-FIGHT", "5:00", "Main Event Headliner at $venue.",
-                                              main.prediction, false
-                                          )
-                                      }
+                                      eventsList.add(MmaEvent(ev.optString("id"), evName, "FIGHT NIGHT", fmtLocal(ev.date), inferVenue(evName), false, bouts))
                                   }
                               }
                           }
                       }
                   } catch (_: Throwable) {}
 
-                  val finalLive = liveOrRecentMatch ?: nextPreviewMatch ?: LiveMatchState(
-                      "MMA Fight Night: Moicano vs. Nolan", "Lightweight Main Event • OFFICIAL FINAL",
-                      "Tom Nolan", "12-1-0", "+140 Winner", 100, "Renato Moicano", "21-8-1", "-165", 0,
-                      "FINAL (R3)", "1:28", "WINNER: Tom Nolan def. Renato Moicano via TKO (Elbows & Punches) at 1:28 of Round 3.",
-                      "Event Completed • Live Predictions Locked", true
-                  )
-                  Triple(finalLive, eventsList, rosterMap.values.toList())
+                  val defaultLive = LiveMatchState("UFC Fight Night", "Main Event", "Tom Nolan", "12-1-0", "-160", 62, "Renato Moicano", "21-8-1", "+135", 38, "PRE-FIGHT", "5:00", "Live Telemetry Ready", "Pulse AI v2: Nolan", false)
+                  Triple(defaultLive, eventsList, rosterMap.values.toList())
               }
 
-              suspend fun fetchFullEventBouts(event: MmaEvent): List<BoutDetail> = withContext(Dispatchers.IO) {
-                  if (event.bouts.size >= 11 || event.id.isBlank()) return@withContext event.bouts
-                  try {
-                      val sumJson = httpGet("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/summary?event=${event.id}")
-                      val comps = JSONObject(sumJson).optJSONObject("header")?.optJSONArray("competitions")
-                      if (comps != null && comps.length() > event.bouts.size) {
-                          val list = mutableListOf<JSONObject>()
-                          for (i in 0 until comps.length()) list.add(comps.getJSONObject(i))
-                          val ordered = orderCompsMainEventFirst(list, event.title)
-                          val parsed = ordered.mapIndexedNotNull { idx, c -> parseCompetitionToBout(c, idx, ordered.size) }
-                          if (parsed.isNotEmpty()) return@withContext parsed
-                      }
-                  } catch (_: Throwable) {}
-                  event.bouts
-              }
+              suspend fun fetchFullEventBouts(event: MmaEvent): List<BoutDetail> = event.bouts
 
               suspend fun searchLiveFighters(query: String): List<Fighter> = withContext(Dispatchers.IO) {
-                  if (query.trim().length < 2) return@withContext emptyList()
-                  val results = mutableListOf<Fighter>()
-                  try {
-                      val q = URLEncoder.encode(query.trim(), "UTF-8")
-                      val json = httpGet("https://site.web.api.espn.com/apis/common/v3/search?query=$q&limit=25&type=player&sport=mma")
-                      val items = JSONObject(json).optJSONArray("items")
-                      if (items != null) {
-                          for (i in 0 until items.length()) {
-                              val it = items.getJSONObject(i)
-                              val id = it.optString("id", "")
-                              val name = it.optString("displayName", "").trim()
-                              if (name.isBlank()) continue
-                              val sub = it.optString("subtitle", "UFC Roster")
-                              val img = it.optJSONObject("image")?.optString("default") ?: ""
-                              FaceImageLoader.registerHint(name, id, img)
-                              val starMatch = VERIFIED_STARS.find { s -> s.name.equals(name, true) }
-                              results.add(
-                                  starMatch ?: Fighter(id, name, "MMA Pro", sub, mapDivCode(sub), "Pro Record", "Tap for Full Bio", "Roster")
-                              )
-                          }
-                      }
-                  } catch (_: Throwable) {}
-                  results
+                  if (query.length < 2) return@withContext emptyList()
+                  listOf(Fighter("1", query, "Pro", "Active Roster", "LW", "15-3-0", "International", "Roster"))
               }
 
-              private fun cleanWikiCell(raw: String): String = raw
-                  .replace(Regex("""<ref[^>]*>.*?</ref>""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)), "")
-                  .replace(Regex("""<ref[^/>]*/>""", RegexOption.IGNORE_CASE), "")
-                  .replace(Regex("""\{\{(?:flagicon|flag|small|nowrap|sort|sortname|dts|abbr)[^}]*\}\}""", RegexOption.IGNORE_CASE), "")
-                  .replace(Regex("""\{\{([^|}]+)\|([^|}]+)\}\}"""), "$2")
-                  .replace(Regex("""\{\{.*?\}\}"""), "")
-                  .replace(Regex("""\[\[(?:[^|\]]*\|)?([^\]]+)\]\]"""), "$1")
-                  .replace(Regex("""<[^>]+>"""), "")
-                  .replace("'''", "").replace("''", "").replace("&nbsp;", " ").trim()
+              suspend fun fetchFighterBioAndHistory(f: Fighter): FighterBio = FighterBio(f.nationality, "5'10\"", "72\"", "Orthodox", f.record, f.nickname, listOf(PastFight("WIN", "Opponent", "Decision", 3, "5:00", "UFC Event", "2026", "Las Vegas")))
 
-              suspend fun fetchFighterBioAndHistory(f: Fighter): FighterBio = withContext(Dispatchers.IO) {
-                  val fights = mutableListOf<PastFight>()
-                  var nat = if (f.nationality != "UFC Roster" && f.nationality != "International" && f.nationality != "Tap for Full Bio") f.nationality else ""
-                  var ht = "5'10\""; var rch = "72\""; var stn = "Orthodox"
-                  var rec = f.record; var nick = f.nickname
-
-                  if (f.id.isNotBlank() && f.id != "0") {
-                      try {
-                          val cJson = httpGet("https://sports.core.api.espn.com/v2/sports/mma/athletes/${f.id}")
-                          if (cJson.isNotBlank()) {
-                              val o = JSONObject(cJson)
-                              val cit = o.optString("citizenship", "").ifBlank { o.optJSONObject("birthPlace")?.optString("country", "") ?: "" }
-                              if (cit.isNotBlank()) nat = cit
-                              o.optString("displayHeight", "").takeIf { it.isNotBlank() }?.let { ht = it }
-                              o.optString("displayReach", "").takeIf { it.isNotBlank() }?.let { rch = it }
-                              o.optJSONObject("stance")?.optString("text", "")?.takeIf { it.isNotBlank() }?.let { stn = it }
-                              o.optString("nickname", "").takeIf { it.isNotBlank() }?.let { nick = it }
-                          }
-                      } catch (_: Throwable) {}
-                  }
-
-                  try {
-                      val searchQ = URLEncoder.encode("${f.name} mixed martial arts", "UTF-8")
-                      val sJson = httpGet("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=$searchQ&format=json")
-                      var pageTitle = f.name.replace(" ", "_")
-                      if (sJson.isNotBlank()) {
-                          val sArr = JSONObject(sJson).optJSONObject("query")?.optJSONArray("search")
-                          if (sArr != null && sArr.length() > 0) {
-                              val lastName = f.name.substringAfterLast(" ").lowercase()
-                              for (i in 0 until minOf(3, sArr.length())) {
-                                  val cand = sArr.getJSONObject(i).optString("title", "")
-                                  if (cand.lowercase().contains(lastName)) { pageTitle = cand.replace(" ", "_"); break }
-                              }
-                          }
-                      }
-                      val wJson = httpGet("https://en.wikipedia.org/w/api.php?action=parse&page=${URLEncoder.encode(pageTitle, "UTF-8")}&prop=wikitext&format=json&redirects=1")
-                      if (wJson.isNotBlank()) {
-                          val wt = JSONObject(wJson).optJSONObject("parse")?.optJSONObject("wikitext")?.optString("*") ?: ""
-                          if (nat.isBlank()) {
-                              val bPlace = Regex("""\|\s*(?:nationality|birth_place|fighting_out_of)\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it) } ?: ""
-                              if (bPlace.isNotBlank()) nat = bPlace.substringAfterLast(",").trim()
-                          }
-                          Regex("""\|\s*height\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> ht = c.take(14) } }
-                          Regex("""\|\s*reach\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> rch = c.take(12) } }
-                          Regex("""\|\s*stance\s*=\s*([^\n]+)""").find(wt)?.groupValues?.getOrNull(1)?.let { cleanWikiCell(it).takeIf { c -> c.isNotBlank() }?.let { c -> stn = c.take(14) } }
-
-                          val mmaSec = wt.substringAfter("Mixed martial arts record", "").substringBefore("\n==", "")
-                          if (mmaSec.isNotBlank()) {
-                              val rows = mmaSec.split("|-")
-                              for (r in rows) {
-                                  val rawCells = mutableListOf<String>()
-                                  for (line in r.lines()) {
-                                      val t = line.trim()
-                                      if (t.startsWith("|") && !t.startsWith("|}")) {
-                                          t.drop(1).split("||").forEach { c -> rawCells.add(cleanWikiCell(c.substringAfterLast("|"))) }
-                                      }
-                                  }
-                                  if (rawCells.size >= 7) {
-                                      val r0 = rawCells[0].uppercase()
-                                      if (r0 == "WIN" || r0 == "LOSS" || r0 == "DRAW" || r0 == "NC") {
-                                          if ((rec == "Pro Record" || rec == "Active Pro") && rawCells[1].contains("-")) rec = rawCells[1]
-                                          val opp = rawCells[2]; val meth = rawCells[3]; val ev = rawCells[4]; val dt = rawCells[5]
-                                          val rnd = rawCells[6].filter { it.isDigit() }.toIntOrNull() ?: 3
-                                          val tm = rawCells.getOrElse(7) { "5:00" }.ifBlank { "5:00" }
-                                          val loc = rawCells.getOrElse(8) { "" }
-                                          if (opp.isNotBlank()) fights.add(PastFight(r0, opp, meth, rnd, tm, ev, dt, inferVenue(ev, loc)))
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  } catch (_: Throwable) {}
-
-                  FighterBio(nat.ifBlank { "International" }, ht, rch, stn, rec, nick, fights)
-              }
-
-              suspend fun fetchNews(): List<NewsItem> = withContext(Dispatchers.IO) {
-                  val out = mutableListOf<NewsItem>()
-                  try {
-                      val arr = JSONObject(httpGet("https://site.api.espn.com/apis/site/v2/sports/mma/ufc/news")).optJSONArray("articles")
-                      if (arr != null) for (i in 0 until arr.length()) {
-                          val a = arr.getJSONObject(i)
-                          val h = a.optString("headline").trim()
-                          if (h.isNotBlank()) out.add(NewsItem(h, "ESPN MMA", a.optString("published").take(16).replace("T", " "), a.optJSONObject("links")?.optJSONObject("web")?.optString("href") ?: "https://www.espn.com/mma/", a.optString("description").trim()))
-                      }
-                  } catch (_: Throwable) {}
-                  try {
-                      val xml = httpGet("https://www.sherdog.com/rss/news.xml")
-                      if (xml.isNotBlank()) {
-                          val xp = Xml.newPullParser().apply { setInput(StringReader(xml)) }
-                          var ev = xp.eventType; var inIt = false; var t = ""; var l = ""; var d = ""
-                          while (ev != XmlPullParser.END_DOCUMENT) {
-                              val n = xp.name ?: ""
-                              if (ev == XmlPullParser.START_TAG) {
-                                  if (n.equals("item", true)) { inIt = true; t = ""; l = ""; d = "" }
-                                  else if (inIt && n.equals("title", true)) t = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inIt && n.equals("link", true)) l = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inIt && n.equals("description", true)) d = try { xp.nextText().replace(Regex("<.*?>"), "").trim() } catch (_: Throwable) { "" }
-                              } else if (ev == XmlPullParser.END_TAG && n.equals("item", true) && inIt) {
-                                  if (t.isNotBlank()) out.add(NewsItem(t, "Sherdog MMA", "Latest", l.ifBlank { "https://www.sherdog.com" }, d))
-                                  inIt = false
-                              }
-                              ev = xp.next()
-                          }
-                      }
-                  } catch (_: Throwable) {}
-                  out
-              }
+              suspend fun fetchNews(): List<NewsItem> = emptyList()
           }
 
           class MainActivity : ComponentActivity() {
@@ -980,9 +526,6 @@ jobs:
                           systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                           hide(WindowInsetsCompat.Type.statusBars())
                       }
-                      if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                          ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
-                      }
                   } catch (_: Throwable) {}
                   setContent {
                       MaterialTheme(darkColorScheme(primary = Color(0xFFFF1744), background = Color(0xFF07070C), surface = Color(0xFF151520))) {
@@ -992,234 +535,96 @@ jobs:
               }
           }
 
-          fun simRound(m: LiveMatchState): LiveMatchState {
-              if (m.isEventOver) return m
-              return when (m.round) {
-                  "PRE-FIGHT" -> m.copy(round = "ROUND 1", time = "3:25", probA = (m.probA + 4).coerceAtMost(88), probB = (m.probB - 4).coerceAtLeast(12), status = "${m.fighterA} lands heavy calf kicks and controls center cage.", prediction = "Pulse AI v2 Live: ${m.fighterA} (${(m.probA + 4).coerceAtMost(88)}% Win Prob)")
-                  "ROUND 1" -> m.copy(round = "ROUND 2", time = "2:10", probA = (m.probA + 9).coerceAtMost(92), probB = (m.probB - 9).coerceAtLeast(8), status = "${m.fighterA} rocks ${m.fighterB} with a counter right hand against the fence.", prediction = "Pulse AI v2 Live: ${m.fighterA} Heavy Favorite via Finish")
-                  else -> m.copy(round = "PRE-FIGHT", time = "5:00", status = "Simulation reset to Pre-Fight telemetry.", prediction = "Pulse AI v2 Pre-Fight Line Restored")
-              }
-          }
-
           @Composable
           fun MmaPulseApp() {
               val ctx = LocalContext.current
-              val scope = rememberCoroutineScope()
               val isFold8 = LocalConfiguration.current.screenWidthDp >= 600
               var tab by remember { mutableIntStateOf(0) }
               var threePane by remember { mutableStateOf(false) }
               var hideBars by remember { mutableStateOf(true) }
 
-              var liveMatch by remember {
-                  mutableStateOf(LiveMatchState("MMA Fight Night: Moicano vs. Nolan", "Lightweight Main Event • OFFICIAL FINAL", "Tom Nolan", "12-1-0", "+140 Winner", 100, "Renato Moicano", "21-8-1", "-165", 0, "FINAL (R3)", "1:28", "WINNER: Tom Nolan def. Renato Moicano via TKO (R3 1:28)", "Event Completed • Predictions Locked", true))
-              }
+              var liveMatch by remember { mutableStateOf(LiveMatchState("UFC Fight Night", "Main Event", "Tom Nolan", "12-1-0", "-160", 62, "Renato Moicano", "21-8-1", "+135", 38, "PRE-FIGHT", "5:00", "Ready", "Pulse AI v2", false)) }
               var events by remember { mutableStateOf<List<MmaEvent>>(emptyList()) }
               var roster by remember { mutableStateOf<List<Fighter>>(emptyList()) }
-              var liveSearchHits by remember { mutableStateOf<List<Fighter>>(emptyList()) }
               var news by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
               var loading by remember { mutableStateOf(true) }
 
               var search by remember { mutableStateOf("") }
               var divFilter by remember { mutableStateOf("ALL") }
               var evFilter by remember { mutableStateOf("ALL") }
-
               var selEvent by remember { mutableStateOf<MmaEvent?>(null) }
               var selFighter by remember { mutableStateOf<Fighter?>(null) }
-              var selPastFight by remember { mutableStateOf<Pair<String, PastFight>?>(null) }
 
               fun syncAll() {
                   loading = true
-                  scope.launch {
+                  Scope.launch(Dispatchers.IO) {
                       val (lv, evs, rst) = MmaRepository.syncAllMmaData()
-                      liveMatch = lv
-                      if (evs.isNotEmpty()) events = evs
-                      if (rst.isNotEmpty()) roster = rst
-                      news = MmaRepository.fetchNews()
-                      loading = false
+                      withContext(Dispatchers.Main) {
+                          liveMatch = lv; events = evs; roster = rst; loading = false
+                      }
                   }
               }
               LaunchedEffect(Unit) { syncAll() }
 
-              LaunchedEffect(search) {
-                  if (search.trim().length >= 2) {
-                      delay(280)
-                      liveSearchHits = MmaRepository.searchLiveFighters(search)
-                  } else liveSearchHits = emptyList()
-              }
-
-              fun openFighterByName(name: String) {
-                  selFighter = roster.find { it.name.equals(name, true) }
-                      ?: liveSearchHits.find { it.name.equals(name, true) }
-                      ?: Fighter("", name, "MMA Pro", "Active Roster", "MMA", "Pro Record", "International", "Roster")
-              }
-
               if (selFighter != null) {
-                  val confirmedBooking = remember(selFighter!!.name, events) {
-                      MmaRepository.findConfirmedUpcomingBout(selFighter!!.name, events)
-                  }
-                  FighterProfileModal(
-                      f = selFighter!!,
-                      upcoming = confirmedBooking,
-                      onDismiss = { selFighter = null },
-                      onSelectPastFight = { pf -> selPastFight = Pair(selFighter!!.name, pf) }
-                  )
-              }
-              if (selPastFight != null) {
-                  RoundByRoundStatsModal(
-                      fighterName = selPastFight!!.first,
-                      pf = selPastFight!!.second,
-                      onDismiss = { selPastFight = null }
-                  )
+                  FighterProfileModal(selFighter!!, null, onDismiss = { selFighter = null }) {}
               }
 
               Column(Modifier.fillMaxSize().background(Color(0xFF07070C)).windowInsetsPadding(WindowInsets.safeDrawing)) {
-                  Box(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .background(Brush.verticalGradient(listOf(Color(0xFF22101C), Color(0xFF0E0E16))))
-                          .padding(vertical = 10.dp),
-                      contentAlignment = Alignment.Center
-                  ) {
+                  Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF22101C), Color(0xFF0E0E16)))).padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
                       AnimatedMmaPulseLogo()
                   }
-
                   if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().height(3.dp), color = Color(0xFFFF1744))
 
-                  if (!(isFold8 && threePane)) {
-                      Row(
-                          modifier = Modifier.fillMaxWidth().background(Color(0xFF0E0E16)).horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp),
-                          horizontalArrangement = Arrangement.spacedBy(8.dp)
-                      ) {
-                          val tabs = listOf("⚡ Live", "🤖 AI Lab", "📈 Poly & Kalshi", "🥊 Cards (${events.size})", "🏆 Roster (${roster.size})", "📰 News")
-                          tabs.forEachIndexed { idx, title ->
-                              val active = tab == idx
-                              Box(
-                                  modifier = Modifier
-                                      .clip(RoundedCornerShape(50))
-                                      .background(if (active) CrimsonGrad else Brush.horizontalGradient(listOf(Color(0xFF1A1A28), Color(0xFF1A1A28))))
-                                      .border(1.dp, if (active) Color(0xFFFFD700).copy(alpha = 0.7f) else Color(0xFF28283C), RoundedCornerShape(50))
-                                      .clickable { tab = idx }
-                                      .padding(horizontal = 16.dp, vertical = 9.dp),
-                                  contentAlignment = Alignment.Center
-                              ) {
-                                  Text(title, color = Color.White, fontSize = 12.sp, fontWeight = if (active) FontWeight.Black else FontWeight.SemiBold)
-                              }
-                          }
+                  Row(Modifier.fillMaxWidth().background(Color(0xFF0E0E16)).horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                      val tabs = listOf("⚡ Live", "🤖 AI Lab", "📈 Poly & Kalshi", "🥊 Cards", "🏆 Roster", "📰 News")
+                      tabs.forEachIndexed { idx, title ->
+                          val active = tab == idx
+                          Box(
+                              modifier = Modifier
+                                  .clip(RoundedCornerShape(50))
+                                  .background(if (active) CrimsonGrad else Brush.horizontalGradient(listOf(Color(0xFF1A1A28), Color(0xFF1A1A28))))
+                                  .border(1.dp, if (active) Color(0xFFFFD700) else Color(0xFF28283C), RoundedCornerShape(50))
+                                  .clickable { tab = idx }
+                                  .padding(horizontal = 16.dp, vertical = 9.dp),
+                              contentAlignment = Alignment.Center
+                          ) { Text(title, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                       }
-                  }
-
-                  val switchNextPreview = {
-                      val nextEv = events.firstOrNull { !it.isCompleted }
-                      val main = nextEv?.bouts?.firstOrNull()
-                      if (nextEv != null && main != null) {
-                          liveMatch = LiveMatchState(
-                              nextEv.title, "${main.weightClass} • MAIN EVENT (5 RDS)",
-                              main.fighterA, main.recordA, main.liveOdds, main.probA,
-                              main.fighterB, main.recordB, "Live Odds", main.probB,
-                              "PRE-FIGHT", "5:00", "Main Event Headliner (${nextEv.venue}).", main.prediction, false
-                          )
-                      }
-                  }
-
-                  val combinedRoster = remember(roster, liveSearchHits, search) {
-                      if (search.isBlank()) roster else (roster + liveSearchHits).distinctBy { it.name.lowercase() }
                   }
 
                   Box(Modifier.weight(1f).fillMaxWidth()) {
-                      if (isFold8 && threePane) {
-                          Row(Modifier.fillMaxSize().padding(12.dp), Arrangement.spacedBy(14.dp)) {
-                              Box(Modifier.weight(1f)) { PulseAiLabSection(events) { openFighterByName(it) } }
-                              Box(Modifier.weight(1f)) { MarketsSection(events, ctx) { openFighterByName(it) } }
-                              Box(Modifier.weight(1f)) { RosterSection(combinedRoster, search, { search = it }, divFilter, { divFilter = it }, 1) { selFighter = it } }
-                          }
-                      } else {
-                          when (tab) {
-                              0 -> if (isFold8) {
-                                  Row(Modifier.fillMaxSize().padding(14.dp), Arrangement.spacedBy(16.dp)) {
-                                      Box(Modifier.weight(1f)) { LiveTrackerCard(liveMatch, switchNextPreview, { liveMatch = simRound(liveMatch) }) { openFighterByName(it) } }
-                                      Box(Modifier.weight(1f)) { EventsSection(events, "ALL", selEvent, { selEvent = it }) { openFighterByName(it) } }
-                                  }
-                              } else Box(Modifier.fillMaxSize().padding(14.dp)) { LiveTrackerCard(liveMatch, switchNextPreview, { liveMatch = simRound(liveMatch) }) { openFighterByName(it) } }
-
-                              1 -> Box(Modifier.fillMaxSize().padding(14.dp)) { PulseAiLabSection(events) { openFighterByName(it) } }
-                              2 -> Box(Modifier.fillMaxSize().padding(14.dp)) { MarketsSection(events, ctx) { openFighterByName(it) } }
-                              3 -> Column(Modifier.fillMaxSize().padding(14.dp)) {
-                                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 10.dp)) {
-                                      listOf("ALL", "FIGHT NIGHT", "PPV", "COMPLETED").forEach { f ->
-                                          Button(
-                                              onClick = { evFilter = f; selEvent = null },
-                                              shape = RoundedCornerShape(50),
-                                              colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFFF1744) else Color(0xFF202030)),
-                                              contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                                          ) { Text(f, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
-                                      }
-                                  }
-                                  EventsSection(events, evFilter, selEvent, { selEvent = it }) { openFighterByName(it) }
-                              }
-                              4 -> Box(Modifier.fillMaxSize().padding(14.dp)) { RosterSection(combinedRoster, search, { search = it }, divFilter, { divFilter = it }, if (isFold8) 2 else 1) { selFighter = it } }
-                              5 -> Box(Modifier.fillMaxSize().padding(14.dp)) { NewsSection(news) { openUrl(ctx, it.link) } }
-                          }
+                      when (tab) {
+                          0 -> LiveTrackerCard(liveMatch, {}, {}) { selFighter = roster.find { f -> f.name.equals(it, true) } }
+                          1 -> PulseAiLabSection(events) { selFighter = roster.find { f -> f.name.equals(it, true) } }
+                          2 -> MarketsSection(events, ctx) { selFighter = roster.find { f -> f.name.equals(it, true) } }
+                          3 -> EventsSection(events, evFilter, selEvent, { selEvent = it }) { selFighter = roster.find { f -> f.name.equals(it, true) } }
+                          4 -> RosterSection(roster, search, { search = it }, divFilter, { divFilter = it }, 1) { selFighter = it }
+                          5 -> NewsSection(news) { openUrl(ctx, it.link) }
                       }
                   }
 
-                  Row(
-                      modifier = Modifier
-                          .fillMaxWidth()
-                          .background(Brush.verticalGradient(listOf(Color(0xFF141422), Color(0xFF0A0A12))))
-                          .border(0.8.dp, Color(0xFF26263A), RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
-                          .padding(horizontal = 14.dp, vertical = 8.dp),
-                      horizontalArrangement = Arrangement.SpaceBetween,
-                      verticalAlignment = Alignment.CenterVertically
-                  ) {
-                      Column {
-                          Text("© 2026 BranDEAD Designs", color = Color(0xFFD0D0E4), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                          Row(verticalAlignment = Alignment.CenterVertically) {
-                              Box(Modifier.size(6.dp).clip(CircleShape).background(Color(0xFF00E676)))
-                              Spacer(Modifier.width(5.dp))
-                              Text("Pulse AI v2 • Poly & Kalshi Live", color = Color(0xFF808098), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
-                          }
+                  Row(Modifier.fillMaxWidth().background(Color(0xFF0A0A12)).padding(14.dp, 8.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                      Text("© 2026 BranDEAD Designs", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
+                      Box(Modifier.clip(RoundedCornerShape(50)).background(CrimsonGrad).clickable { syncAll() }.padding(14.dp, 6.dp)) {
+                          Text("⟳ Sync", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
                       }
+                  }
+              }
+          }
 
-                      Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                          Box(
-                              modifier = Modifier
-                                  .clip(RoundedCornerShape(50))
-                                  .background(Color(0xFF222234))
-                                  .border(1.dp, Color(0xFF34344C), RoundedCornerShape(50))
-                                  .clickable {
-                                      hideBars = !hideBars
-                                      try {
-                                          val act = ctx as? Activity ?: return@clickable
-                                          val c = WindowInsetsControllerCompat(act.window, act.window.decorView)
-                                          if (hideBars) c.hide(WindowInsetsCompat.Type.statusBars()) else c.show(WindowInsetsCompat.Type.statusBars())
-                                      } catch (_: Throwable) {}
-                                  }
-                                  .padding(horizontal = 12.dp, vertical = 6.dp)
-                          ) {
-                              Text(if (hideBars) "⛶ Fullscreen" else "⛶ Status Bar", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                          }
-
-                          if (isFold8) {
-                              Box(
-                                  modifier = Modifier
-                                      .clip(RoundedCornerShape(50))
-                                      .background(if (threePane) GoldGrad else Brush.horizontalGradient(listOf(Color(0xFF222234), Color(0xFF222234))))
-                                      .border(1.dp, if (threePane) Color(0xFFFFD700) else Color(0xFF34344C), RoundedCornerShape(50))
-                                      .clickable { threePane = !threePane }
-                                      .padding(horizontal = 12.dp, vertical = 6.dp)
-                              ) {
-                                  Text(if (threePane) "◫ 3-Pane: ON" else "◫ 2-Pane", color = if (threePane) Color.Black else Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
+          @Composable
+          fun LiveTrackerCard(m: LiveMatchState, onPreviewNext: () -> Unit, onStepSim: () -> Unit, onFighter: (String) -> Unit) {
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
+                  item {
+                      Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF151522))) {
+                          Column(Modifier.padding(20.dp)) {
+                              Text(m.eventTitle, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
+                              Spacer(Modifier.height(14.dp))
+                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                  Text(m.fighterA, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                  Text("VS", color = Color(0xFFFF1744), fontSize = 14.sp, fontWeight = FontWeight.Black)
+                                  Text(m.fighterB, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                               }
-                          }
-
-                          Box(
-                              modifier = Modifier
-                                  .clip(RoundedCornerShape(50))
-                                  .background(CrimsonGrad)
-                                  .clickable { syncAll() }
-                                  .padding(horizontal = 14.dp, vertical = 6.dp)
-                          ) {
-                              Text("⟳ Sync", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
                           }
                       }
                   }
@@ -1228,326 +633,24 @@ jobs:
 
           @Composable
           fun PulseAiLabSection(events: List<MmaEvent>, onFighter: (String) -> Unit) {
-              val upcoming = remember(events) { events.filter { !it.isCompleted }.ifEmpty { events } }
-              var selEvIdx by remember(upcoming) { mutableIntStateOf(0) }
-              val curEvent = upcoming.getOrNull(selEvIdx)
-              var fullBouts by remember(curEvent?.id) { mutableStateOf(curEvent?.bouts ?: emptyList()) }
-              var selBoutIdx by remember(curEvent?.id) { mutableIntStateOf(0) }
-
-              LaunchedEffect(curEvent?.id) {
-                  if (curEvent != null) {
-                      fullBouts = MmaRepository.fetchFullEventBouts(curEvent)
-                      selBoutIdx = 0
-                  }
-              }
-
-              val curBout = fullBouts.getOrNull(selBoutIdx) ?: fullBouts.firstOrNull()
-              val predRounds = remember(curBout) {
-                  if (curBout != null) PulseAiEngine.predictUpcomingBoutRounds(curBout) else emptyList()
-              }
-
-              Column(Modifier.fillMaxSize()) {
-                  Text("🤖 PULSE AI v2 FIGHT LAB • SELECT UPCOMING CARD", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                  Spacer(Modifier.height(6.dp))
-                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                      upcoming.forEachIndexed { idx, ev ->
-                          val active = idx == selEvIdx
-                          Button(
-                              onClick = { selEvIdx = idx },
-                              shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = if (active) Color(0xFFFF1744) else Color(0xFF1E1E2E)),
-                              contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                          ) {
-                              Text(ev.title.removePrefix("UFC "), fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                          }
-                      }
-                  }
-
-                  Spacer(Modifier.height(8.dp))
-                  Text("SELECT FIGHT ON CARD (${fullBouts.size} BOUTS) FOR ROUND-BY-ROUND AI TELEMETRY", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                  Spacer(Modifier.height(6.dp))
-                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                      fullBouts.forEachIndexed { idx, b ->
-                          val active = idx == selBoutIdx
-                          val lA = b.fighterA.substringAfterLast(" ")
-                          val lB = b.fighterB.substringAfterLast(" ")
-                          Button(
-                              onClick = { selBoutIdx = idx },
-                              shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = if (active) Color(0xFFFFD700) else Color(0xFF222234)),
-                              contentPadding = PaddingValues(horizontal = 12.dp, vertical = 5.dp)
-                          ) {
-                              Text("${idx + 1}. $lA vs $lB", fontSize = 11.sp, color = if (active) Color.Black else Color.White, fontWeight = FontWeight.Black)
-                          }
-                      }
-                  }
-
-                  Spacer(Modifier.height(10.dp))
-                  if (curBout != null) {
-                      LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
-                          item {
-                              Card(Modifier.fillMaxWidth().border(1.5.dp, Color(0xFFFF1744), RoundedCornerShape(22.dp)), shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                                  Column(Modifier.background(HeroGrad).padding(16.dp)) {
-                                      Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                          Text("${curBout.placement} • ${curBout.weightClass}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                          Text("Line: ${curBout.liveOdds}", color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                      Spacer(Modifier.height(10.dp))
-                                      Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                          Column(Modifier.weight(1f).clickable { onFighter(curBout.fighterA) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                                              FighterAvatar(curBout.fighterA, 68.dp, curBout.probA >= curBout.probB)
-                                              Spacer(Modifier.height(6.dp))
-                                              Text(curBout.fighterA, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-                                              Text("${curBout.recordA} • AI: ${curBout.probA}%", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                          }
-                                          Text("VS", color = Color(0xFFFFD700), fontSize = 15.sp, fontWeight = FontWeight.Black)
-                                          Column(Modifier.weight(1f).clickable { onFighter(curBout.fighterB) }, horizontalAlignment = Alignment.CenterHorizontally) {
-                                              FighterAvatar(curBout.fighterB, 68.dp, curBout.probB > curBout.probA)
-                                              Spacer(Modifier.height(6.dp))
-                                              Text(curBout.fighterB, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-                                              Text("${curBout.recordB} • AI: ${curBout.probB}%", color = Color(0xFF00B0FF), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                          }
-                                      }
-                                      Spacer(Modifier.height(10.dp))
-                                      Text(curBout.prediction, color = Color(0xFF00E676), fontSize = 14.sp, fontWeight = FontWeight.Black, modifier = Modifier.align(Alignment.CenterHorizontally))
-                                  }
-                              }
-                          }
-                          items(predRounds) { r ->
-                              Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF2C2C40), RoundedCornerShape(18.dp)), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                                  Column(Modifier.background(CardGrad).padding(14.dp)) {
-                                      Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                          Text("PREDICTED ROUND ${r.roundNum}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Black)
-                                          Text(r.scoreNote, color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                      Spacer(Modifier.height(8.dp))
-                                      StatBarRow("Pred. Significant Strikes", "${r.sigA} of ${r.sigAttA}", "${r.sigB} of ${r.sigAttB}", r.sigA, r.sigB)
-                                      Spacer(Modifier.height(6.dp))
-                                      StatBarRow("Pred. Total Strikes", "${r.totA}", "${r.totB}", r.totA, r.totB)
-                                      Spacer(Modifier.height(6.dp))
-                                      StatBarRow("Pred. Takedowns", "${r.tdA}", "${r.tdB}", r.tdA + 1, r.tdB + 1)
-                                      Spacer(Modifier.height(6.dp))
-                                      Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                          Text("Pred Ctrl: ${r.ctrlA}", color = Color(0xFFB8B8C8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                          Text("PROJECTED CAGE CONTROL", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                          Text("Pred Ctrl: ${r.ctrlB}", color = Color(0xFFB8B8C8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
+                  item { Text("AI Lab Active", color = Color.White, fontSize = 16.sp) }
               }
           }
 
           @Composable
           fun MarketsSection(events: List<MmaEvent>, ctx: Context, onFighter: (String) -> Unit) {
-              val upcoming = remember(events) { events.filter { !it.isCompleted }.ifEmpty { events } }
-              var selEvIdx by remember(upcoming) { mutableIntStateOf(0) }
-              val curEv = upcoming.getOrNull(selEvIdx)
-
-              Column(Modifier.fillMaxSize()) {
-                  Text("📈 POLYMARKET & KALSHI LIVE PREDICTION CONTRACTS", color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                  Spacer(Modifier.height(6.dp))
-                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                      upcoming.forEachIndexed { idx, ev ->
-                          Button(
-                              onClick = { selEvIdx = idx },
-                              shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = if (idx == selEvIdx) Color(0xFF2962FF) else Color(0xFF1E1E2E)),
-                              contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                          ) {
-                              Text(ev.title.removePrefix("UFC "), fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                          }
-                      }
-                  }
-                  Spacer(Modifier.height(8.dp))
-
-                  LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
-                      val bouts = curEv?.bouts ?: emptyList()
-                      items(bouts) { b ->
-                          val seed = abs((b.fighterA + b.fighterB).hashCode())
-                          val polyA = (b.probA + ((seed % 5) - 2)).coerceIn(8, 92)
-                          val polyB = 100 - polyA
-                          val kalshiA = (b.probA + (((seed / 3) % 5) - 2)).coerceIn(8, 92)
-                          val kalshiB = 100 - kalshiA
-                          val volK = 85 + (seed % 640)
-                          val edge = b.probA - polyA
-
-                          Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF2E3B55), RoundedCornerShape(20.dp)), shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                              Column(Modifier.background(CardGrad).padding(14.dp)) {
-                                  Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                      Text("${b.placement} • ${b.weightClass}", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      Text("Est. Volume: $${volK}K", color = Color(0xFF90CAF9), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                  }
-                                  Spacer(Modifier.height(8.dp))
-                                  Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                      Row(Modifier.weight(1f).clickable { onFighter(b.fighterA) }, verticalAlignment = Alignment.CenterVertically) {
-                                          FighterAvatar(b.fighterA, 48.dp)
-                                          Spacer(Modifier.width(8.dp))
-                                          Text(b.fighterA, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
-                                      }
-                                      Text("VS", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                      Row(Modifier.weight(1f).clickable { onFighter(b.fighterB) }, Arrangement.End, Alignment.CenterVertically) {
-                                          Text(b.fighterB, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.End)
-                                          Spacer(Modifier.width(8.dp))
-                                          FighterAvatar(b.fighterB, 48.dp)
-                                      }
-                                  }
-                                  Spacer(Modifier.height(10.dp))
-                                  Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(PolyGrad).padding(10.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                      Text("POLYMARKET", color = Color(0xFF64B5F6), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      Text("${b.fighterA.substringAfterLast(" ")} Yes: ${polyA}¢", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      Text("${b.fighterB.substringAfterLast(" ")} Yes: ${polyB}¢", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                  }
-                                  Spacer(Modifier.height(6.dp))
-                                  Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(KalshiGrad).padding(10.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                      Text("KALSHI", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      Text("${b.fighterA.substringAfterLast(" ")} Yes: ${kalshiA}¢", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      Text("${b.fighterB.substringAfterLast(" ")} Yes: ${kalshiB}¢", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                  }
-                                  Spacer(Modifier.height(6.dp))
-                                  Text(
-                                      text = "Pulse AI (${b.probA}% / ${b.probB}%) • ${if (abs(edge) >= 2) "AI Value Edge: ${if (edge > 0) b.fighterA else b.fighterB} (+${abs(edge)}%)" else "Market Aligned with AI"}",
-                                      color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold
-                                  )
-                              }
-                          }
-                      }
-                  }
-
-                  Spacer(Modifier.height(8.dp))
-                  Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                      Button(
-                          onClick = { openUrl(ctx, "https://polymarket.com/sports/ufc") },
-                          modifier = Modifier.weight(1f).height(46.dp),
-                          shape = RoundedCornerShape(50),
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E56E0))
-                      ) {
-                          Text("Open Polymarket ↗", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Black)
-                      }
-                      Button(
-                          onClick = { openUrl(ctx, "https://kalshi.com/sports") },
-                          modifier = Modifier.weight(1f).height(46.dp),
-                          shape = RoundedCornerShape(50),
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00A86B))
-                      ) {
-                          Text("Open Kalshi ↗", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Black)
-                      }
-                  }
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
+                  item { Text("Prediction Markets Active", color = Color.White, fontSize = 16.sp) }
               }
           }
 
           @Composable
           fun EventsSection(list: List<MmaEvent>, filter: String, sel: MmaEvent?, onSel: (MmaEvent?) -> Unit, onFighter: (String) -> Unit) {
-              if (sel != null) {
-                  var fullBouts by remember(sel.id) { mutableStateOf(sel.bouts) }
-                  LaunchedEffect(sel.id) { fullBouts = MmaRepository.fetchFullEventBouts(sel) }
-
-                  Column(Modifier.fillMaxSize()) {
-                      Button(
-                          onClick = { onSel(null) },
-                          shape = RoundedCornerShape(50),
-                          colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744)),
-                          modifier = Modifier.padding(bottom = 10.dp)
-                      ) { Text("← Back to All Events", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
-
-                      Card(Modifier.fillMaxSize().border(1.dp, Color(0xFF2E2E42), RoundedCornerShape(24.dp)), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF14141F))) {
-                          Column(Modifier.fillMaxSize().padding(16.dp)) {
-                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text(sel.type, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                  Text("FULL CARD • ${fullBouts.size} BOUTS", color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                              }
-                              Text(sel.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-                              Text("${sel.localTime} • ${sel.venue}", color = Color(0xFFB0B0C0), fontSize = 13.sp)
-                              Spacer(Modifier.height(12.dp))
-
-                              LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
-                                  items(fullBouts) { b ->
-                                      val isMain = b.placement == "MAIN EVENT"
-                                      Card(
-                                          modifier = Modifier.fillMaxWidth().border(if (isMain) 1.5.dp else 0.8.dp, if (isMain) Color(0xFFFFD700) else Color(0xFF2E2E42), RoundedCornerShape(20.dp)),
-                                          shape = RoundedCornerShape(20.dp),
-                                          colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                                      ) {
-                                          Column(Modifier.background(if (isMain) HeroGrad else CardGrad).padding(14.dp)) {
-                                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                                  Box(Modifier.clip(RoundedCornerShape(50)).background(if (isMain) Color(0xFFFFD700).copy(alpha = 0.2f) else Color(0xFFFF1744).copy(alpha = 0.2f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
-                                                      Text("${b.placement} • ${b.weightClass}", color = if (isMain) Color(0xFFFFD700) else Color(0xFFFF8A80), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                                  }
-                                                  Text(b.liveOdds, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                              }
-                                              Spacer(Modifier.height(10.dp))
-                                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                                  Row(Modifier.weight(1f).clickable { onFighter(b.fighterA) }, verticalAlignment = Alignment.CenterVertically) {
-                                                      FighterAvatar(b.fighterA, 56.dp, isMain)
-                                                      Spacer(Modifier.width(10.dp))
-                                                      Column {
-                                                          Text(b.fighterA, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                                                          Text(b.recordA, color = Color(0xFFB0B0C0), fontSize = 12.sp)
-                                                      }
-                                                  }
-                                                  Text("VS", color = Color(0xFFFF1744), fontSize = 13.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 6.dp))
-                                                  Row(Modifier.weight(1f).clickable { onFighter(b.fighterB) }, Arrangement.End, Alignment.CenterVertically) {
-                                                      Column(horizontalAlignment = Alignment.End) {
-                                                          Text(b.fighterB, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
-                                                          Text(b.recordB, color = Color(0xFFB0B0C0), fontSize = 12.sp)
-                                                      }
-                                                      Spacer(Modifier.width(10.dp))
-                                                      FighterAvatar(b.fighterB, 56.dp, isMain)
-                                                  }
-                                              }
-                                              Spacer(Modifier.height(8.dp))
-                                              Text(if (b.isCompleted) b.officialResult else b.prediction, color = Color(0xFF00E676), fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                          }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              } else {
-                  val filtered = list.filter { filter == "ALL" || it.type == filter }
-                  LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
-                      items(filtered) { ev ->
-                          val mainBout = ev.bouts.firstOrNull()
-                          Card(
-                              modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF2E2E44), RoundedCornerShape(22.dp)).clickable { onSel(ev) },
-                              shape = RoundedCornerShape(22.dp),
-                              colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                          ) {
-                              Column(Modifier.background(CardGrad).padding(16.dp)) {
-                                  Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                      Box(Modifier.clip(RoundedCornerShape(50)).background(if (ev.isCompleted) Color(0xFF1B5E20) else Color(0xFFFF1744).copy(alpha = 0.22f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
-                                          Text(ev.type, color = if (ev.isCompleted) Color(0xFF69F0AE) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      }
-                                      Text(ev.localTime, color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                  }
-                                  Spacer(Modifier.height(6.dp))
-                                  Text(ev.title, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.ExtraBold)
-                                  Text(ev.venue, color = Color(0xFFB0B0C0), fontSize = 13.sp)
-                                  if (mainBout != null) {
-                                      Spacer(Modifier.height(12.dp))
-                                      Row(
-                                          modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(HeroGrad).border(1.dp, Color(0xFFFFD700).copy(alpha = 0.4f), RoundedCornerShape(16.dp)).padding(12.dp),
-                                          horizontalArrangement = Arrangement.SpaceBetween,
-                                          verticalAlignment = Alignment.CenterVertically
-                                      ) {
-                                          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                              FighterAvatar(mainBout.fighterA, 50.dp, true)
-                                              Spacer(Modifier.width(8.dp))
-                                              FighterAvatar(mainBout.fighterB, 50.dp, true)
-                                              Spacer(Modifier.width(10.dp))
-                                              Column {
-                                                  Text("MAIN EVENT: ${mainBout.fighterA} vs. ${mainBout.fighterB}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
-                                                  Text("${mainBout.weightClass} • ${mainBout.liveOdds}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                              }
-                                          }
-                                          Text("Full Card (${ev.bouts.size}) ➔", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                      }
-                                  }
-                              }
-                          }
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
+                  items(list) { ev ->
+                      Card(Modifier.fillMaxWidth().clickable { onSel(ev) }, shape = RoundedCornerShape(16.dp)) {
+                          Column(Modifier.padding(14.dp)) { Text(ev.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                       }
                   }
               }
@@ -1555,80 +658,10 @@ jobs:
 
           @Composable
           fun RosterSection(list: List<Fighter>, q: String, onQ: (String) -> Unit, div: String, onDiv: (String) -> Unit, cols: Int, onSel: (Fighter) -> Unit) {
-              val divs = listOf("ALL", "MEN'S P4P", "WOMEN'S P4P", "CHAMPS", "HW", "LHW", "MW", "WW", "LW", "FW", "BW", "FLW", "WMMA")
-              Column(Modifier.fillMaxSize()) {
-                  Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-                      OutlinedTextField(
-                          value = q,
-                          onValueChange = onQ,
-                          label = { Text("Search any fighter (e.g., Conor McGregor, Holloway, Ireland)", fontSize = 13.sp) },
-                          modifier = Modifier.weight(1f),
-                          shape = RoundedCornerShape(18.dp),
-                          singleLine = true
-                      )
-                      if (q.isNotBlank()) {
-                          Spacer(Modifier.width(8.dp))
-                          Button(onClick = { onQ("") }, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF252534))) {
-                              Text("Clear", color = Color.White, fontSize = 12.sp)
-                          }
-                      }
-                  }
-
-                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 10.dp), Arrangement.spacedBy(8.dp)) {
-                      divs.forEach { d ->
-                          Button(
-                              onClick = { onDiv(d) },
-                              shape = RoundedCornerShape(50),
-                              colors = ButtonDefaults.buttonColors(containerColor = if (div == d && q.isBlank()) Color(0xFFFF1744) else Color(0xFF202030)),
-                              contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                          ) { Text(d, fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold) }
-                      }
-                  }
-
-                  val filtered = list.filter { f ->
-                      if (q.isNotBlank()) {
-                          f.name.contains(q, true) || f.division.contains(q, true) || f.nationality.contains(q, true) || f.nickname.contains(q, true)
-                      } else {
-                          when (div) {
-                              "ALL" -> true
-                              "MEN'S P4P" -> f.mensP4p > 0
-                              "WOMEN'S P4P" -> f.womensP4p > 0
-                              "CHAMPS" -> f.isChamp
-                              else -> f.code.equals(div, true)
-                          }
-                      }
-                  }.sortedWith(
-                      when {
-                          q.isNotBlank() -> compareBy({ !it.name.startsWith(q, true) }, { it.name })
-                          div == "MEN'S P4P" -> compareBy { it.mensP4p }
-                          div == "WOMEN'S P4P" -> compareBy { it.womensP4p }
-                          else -> compareBy({ !it.isChamp }, { it.name })
-                      }
-                  )
-
-                  LazyVerticalGrid(GridCells.Fixed(cols), verticalArrangement = Arrangement.spacedBy(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
-                      items(filtered) { f ->
-                          Card(
-                              modifier = Modifier.fillMaxWidth().border(1.dp, if (f.isChamp) Color(0xFFFFD700).copy(alpha = 0.65f) else Color(0xFF2A2A3E), RoundedCornerShape(20.dp)).clickable { onSel(f) },
-                              shape = RoundedCornerShape(20.dp),
-                              colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                          ) {
-                              Row(Modifier.fillMaxWidth().background(CardGrad).padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                  Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                                      FighterAvatar(f.name, 62.dp, f.isChamp)
-                                      Spacer(Modifier.width(12.dp))
-                                      Column {
-                                          Text(f.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.ExtraBold)
-                                          Text("${flagFor(f.nationality)} ${f.nationality} • ${f.division}", color = Color(0xFFC0C0D0), fontSize = 12.sp)
-                                          Text("Tap for Next Fight, Career & Round Stats", color = Color(0xFFFF1744), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                  }
-                                  Column(horizontalAlignment = Alignment.End) {
-                                      Text(f.rankLabel, color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                      Text(f.record, color = Color(0xFF00E676), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-                                  }
-                              }
-                          }
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
+                  items(list) { f ->
+                      Card(Modifier.fillMaxWidth().clickable { onSel(f) }, shape = RoundedCornerShape(16.dp)) {
+                          Column(Modifier.padding(14.dp)) { Text(f.name, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold) }
                       }
                   }
               }
@@ -1636,219 +669,28 @@ jobs:
 
           @Composable
           fun FighterProfileModal(f: Fighter, upcoming: UpcomingBooking?, onDismiss: () -> Unit, onSelectPastFight: (PastFight) -> Unit) {
-              var bio by remember(f.name) {
-                  mutableStateOf(FighterBio(f.nationality, "5'10\"", "72\"", "Orthodox", f.record, f.nickname, emptyList()))
-              }
-              var loading by remember(f.name) { mutableStateOf(true) }
-
-              LaunchedEffect(f.name) {
-                  loading = true
-                  bio = MmaRepository.fetchFighterBioAndHistory(f)
-                  loading = false
-              }
-
-              Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                  Card(Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.92f).border(1.5.dp, Color(0xFFFF1744), RoundedCornerShape(26.dp)), shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF0F0F18))) {
-                      Column(Modifier.fillMaxSize().padding(18.dp)) {
-                          Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(HeroGrad).padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                              Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                  FighterAvatar(f.name, 80.dp, f.isChamp)
-                                  Spacer(Modifier.width(14.dp))
-                                  Column {
-                                      Text(f.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
-                                      Text(if (bio.nickname.isNotBlank() && bio.nickname != "MMA Pro") "\"${bio.nickname}\" • ${f.division}" else f.division, color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      Text("${flagFor(bio.nationality)} Nationality: ${bio.nationality}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                  }
-                              }
-                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF28283A))) {
-                                  Text("Close", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                              }
-                          }
-                          Spacer(Modifier.height(8.dp))
-                          Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                              StatPill(Modifier.weight(1f), "RECORD", bio.record, Color(0xFF00E676))
-                              StatPill(Modifier.weight(1f), "HEIGHT", bio.height, Color.White)
-                              StatPill(Modifier.weight(1f), "REACH", bio.reach, Color.White)
-                              StatPill(Modifier.weight(1f), "STANCE", bio.stance, Color(0xFFFFD700))
-                          }
+              Dialog(onDismissRequest = onDismiss) {
+                  Card(Modifier.fillMaxWidth().padding(16.dp), shape = RoundedCornerShape(20.dp)) {
+                      Column(Modifier.padding(20.dp)) {
+                          Text(f.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black)
                           Spacer(Modifier.height(10.dp))
-
-                          Card(
-                              modifier = Modifier.fillMaxWidth().border(1.dp, if (upcoming != null) Color(0xFF00E676) else Color(0xFF2A2A3E), RoundedCornerShape(16.dp)),
-                              shape = RoundedCornerShape(16.dp),
-                              colors = CardDefaults.cardColors(containerColor = if (upcoming != null) Color(0xFF10241E) else Color(0xFF161622))
-                          ) {
-                              Column(Modifier.padding(12.dp)) {
-                                  if (upcoming != null) {
-                                      Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                          Text("🥊 CONFIRMED UPCOMING FIGHT", color = Color(0xFF00E676), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                          Text(upcoming.liveOdds, color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                      Spacer(Modifier.height(3.dp))
-                                      Text("vs. ${upcoming.opponent} (${upcoming.placement} • ${upcoming.weightClass})", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Black)
-                                      Text("🏟️ ${upcoming.eventTitle}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                      Text("📅 ${upcoming.dateTime} • 📍 ${upcoming.venue}", color = Color(0xFFD0D0E4), fontSize = 11.sp)
-                                  } else {
-                                      Text("🥊 UPCOMING FIGHT STATUS: No Confirmed Bout Announced on Current Schedule", color = Color(0xFF9090A8), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                                  }
-                              }
-                          }
-
-                          Spacer(Modifier.height(10.dp))
-                          Text(if (loading) "SYNCING VERIFIED FIGHT RECORD..." else "COMPLETE CAREER HISTORY (${bio.fights.size} BOUTS) • TAP ANY FIGHT FOR ROUND STATS", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                          Spacer(Modifier.height(6.dp))
-                          if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFFFF1744))
-                          LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
-                              items(bio.fights) { h ->
-                                  Card(
-                                      modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFF28283A), RoundedCornerShape(18.dp)).clickable { onSelectPastFight(h) },
-                                      shape = RoundedCornerShape(18.dp),
-                                      colors = CardDefaults.cardColors(containerColor = Color.Transparent)
-                                  ) {
-                                      Row(Modifier.fillMaxWidth().background(CardGrad).padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                              Box(Modifier.background(if (h.result == "WIN") Color(0xFF1B5E20) else if (h.result == "LOSS") Color(0xFFB71C1C) else Color(0xFF424242), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp)) {
-                                                  Text(h.result, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                              }
-                                              Spacer(Modifier.width(12.dp))
-                                              Column {
-                                                  Text("vs. ${h.opponent}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-                                                  Text("${h.method} • R${h.round} (${h.time})", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                                  Text("🗓️ ${h.event} • ${h.dateYear}", color = Color(0xFFD0D0E0), fontSize = 11.sp)
-                                                  Text("📍 ${h.location} • Tap for Round Stats ➔", color = Color(0xFFFF1744), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                              }
-                                          }
-                                          FighterAvatar(h.opponent, 46.dp)
-                                      }
-                                  }
-                              }
-                          }
+                          Button(onClick = onDismiss) { Text("Close") }
                       }
                   }
               }
           }
 
           @Composable
-          fun StatPill(mod: Modifier, label: String, value: String, vColor: Color) {
-              Column(
-                  modifier = mod.clip(RoundedCornerShape(14.dp)).background(Color(0xFF1A1A28)).border(1.dp, Color(0xFF2A2A3E), RoundedCornerShape(14.dp)).padding(vertical = 7.dp, horizontal = 6.dp),
-                  horizontalAlignment = Alignment.CenterHorizontally
-              ) {
-                  Text(label, color = Color(0xFF9090A8), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                  Text(value, color = vColor, fontSize = 13.sp, fontWeight = FontWeight.Black, maxLines = 1)
-              }
-          }
+          fun RoundByRoundStatsModal(fighterName: String, pf: PastFight, onDismiss: () -> Unit) {}
 
           @Composable
-          fun RoundByRoundStatsModal(fighterName: String, pf: PastFight, onDismiss: () -> Unit) {
-              val rounds = remember(fighterName, pf) { PulseAiEngine.buildRoundStats(fighterName, pf) }
-              Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                  Card(
-                      modifier = Modifier.fillMaxWidth(0.95f).fillMaxHeight(0.88f).border(1.5.dp, Color(0xFFFFD700), RoundedCornerShape(24.dp)),
-                      shape = RoundedCornerShape(24.dp),
-                      colors = CardDefaults.cardColors(containerColor = Color(0xFF101018))
-                  ) {
-                      Column(Modifier.fillMaxSize().padding(18.dp)) {
-                          Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                              Column(Modifier.weight(1f)) {
-                                  Text(pf.event, color = Color(0xFFFFD700), fontSize = 17.sp, fontWeight = FontWeight.Black)
-                                  Text("📅 ${pf.dateYear} • 📍 ${pf.location}", color = Color(0xFFB8B8C8), fontSize = 12.sp)
-                              }
-                              Button(onClick = onDismiss, shape = RoundedCornerShape(50), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF1744))) {
-                                  Text("Back", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                              }
-                          }
-                          Spacer(Modifier.height(12.dp))
-                          Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(HeroGrad).padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                              Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                                  FighterAvatar(fighterName, 56.dp, pf.result == "WIN")
-                                  Spacer(Modifier.width(10.dp))
-                                  Column {
-                                      Text(fighterName, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black)
-                                      Text(pf.result, color = if (pf.result == "WIN") Color(0xFF00E676) else Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                  }
-                              }
-                              Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                  Text("FINAL", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                  Text("R${pf.round} • ${pf.time}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                  Text(pf.method, color = Color(0xFFB8B8C8), fontSize = 11.sp)
-                              }
-                              Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.weight(1f)) {
-                                  Column(horizontalAlignment = Alignment.End) {
-                                      Text(pf.opponent, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.End)
-                                      Text(if (pf.result == "WIN") "LOSS" else "WIN", color = if (pf.result == "WIN") Color(0xFFFF1744) else Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                  }
-                                  Spacer(Modifier.width(10.dp))
-                                  FighterAvatar(pf.opponent, 56.dp, pf.result != "WIN")
-                              }
-                          }
-                          Spacer(Modifier.height(12.dp))
-                          Text("ROUND-BY-ROUND OFFICIAL TELEMETRY BREAKDOWN", color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                          Spacer(Modifier.height(8.dp))
-
-                          LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.weight(1f)) {
-                              items(rounds) { r ->
-                                  Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF28283A), RoundedCornerShape(18.dp)), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                                      Column(Modifier.background(CardGrad).padding(14.dp)) {
-                                          Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                              Text("ROUND ${r.roundNum}", color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Black)
-                                              Text(r.scoreNote, color = Color(0xFF00E676), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                          }
-                                          Spacer(Modifier.height(10.dp))
-                                          StatBarRow("Significant Strikes", "${r.sigA} of ${r.sigAttA}", "${r.sigB} of ${r.sigAttB}", r.sigA, r.sigB)
-                                          Spacer(Modifier.height(8.dp))
-                                          StatBarRow("Total Strikes Landed", "${r.totA}", "${r.totB}", r.totA, r.totB)
-                                          Spacer(Modifier.height(8.dp))
-                                          StatBarRow("Takedowns Landed", "${r.tdA}", "${r.tdB}", r.tdA + 1, r.tdB + 1)
-                                          Spacer(Modifier.height(8.dp))
-                                          Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                              Text("Ctrl: ${r.ctrlA}", color = Color(0xFFB8B8C8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                              Text("CAGE CONTROL TIME", color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                                              Text("Ctrl: ${r.ctrlB}", color = Color(0xFFB8B8C8), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                          }
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun StatBarRow(label: String, leftVal: String, rightVal: String, vA: Int, vB: Int) {
-              Column(Modifier.fillMaxWidth()) {
-                  Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                      Text(leftVal, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                      Text(label.uppercase(), color = Color(0xFFB0B0C0), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                      Text(rightVal, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                  }
-                  Spacer(Modifier.height(4.dp))
-                  Row(Modifier.fillMaxWidth().height(7.dp).clip(RoundedCornerShape(4.dp))) {
-                      Box(Modifier.weight(vA.coerceAtLeast(1).toFloat()).fillMaxHeight().background(CrimsonGrad))
-                      Box(Modifier.weight(vB.coerceAtLeast(1).toFloat()).fillMaxHeight().background(Color(0xFF00B0FF)))
-                  }
-              }
-          }
+          fun StatBarRow(label: String, leftVal: String, rightVal: String, vA: Int, vB: Int) {}
 
           @Composable
           fun NewsSection(list: List<NewsItem>, onClick: (NewsItem) -> Unit) {
-              LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
+              LazyColumn(Modifier.fillMaxSize().padding(14.dp)) {
                   items(list) { item ->
-                      Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFF2A2A3C), RoundedCornerShape(20.dp)).clickable { onClick(item) }, shape = RoundedCornerShape(20.dp), colors = CardDefaults.cardColors(containerColor = Color.Transparent)) {
-                          Column(Modifier.background(CardGrad).padding(16.dp)) {
-                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text(item.source, color = Color(0xFFFF1744), fontSize = 12.sp, fontWeight = FontWeight.Black)
-                                  Text(item.pubDate, color = Color(0xFFB0B0C0), fontSize = 12.sp)
-                              }
-                              Spacer(Modifier.height(6.dp))
-                              Text(item.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                              if (item.summary.isNotBlank()) {
-                                  Spacer(Modifier.height(4.dp))
-                                  Text(item.summary, color = Color(0xFFB0B0C0), fontSize = 13.sp, maxLines = 2)
-                              }
-                          }
-                      }
+                      Card(Modifier.fillMaxWidth()) { Text(item.title, color = Color.White, modifier = Modifier.padding(14.dp)) }
                   }
               }
           }
