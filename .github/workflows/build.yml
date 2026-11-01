@@ -29,9 +29,7 @@ jobs:
           mkdir -p app/src/main/java/com/ufc/pulse
 
           cat << 'EOF' > settings.gradle.kts
-          pluginManagement {
-              repositories { google(); mavenCentral(); gradlePluginPortal() }
-          }
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
               repositories { google(); mavenCentral() }
@@ -59,8 +57,8 @@ jobs:
                   applicationId = "com.ufc.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 11
-                  versionName = "11.0-Fold8-Stable"
+                  versionCode = 12
+                  versionName = "12.0-Fold8-Complete"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -114,157 +112,203 @@ jobs:
           package com.ufc.pulse
 
           import android.Manifest
-          import android.app.NotificationChannel
-          import android.app.NotificationManager
-          import android.app.PendingIntent
-          import android.content.Context
-          import android.content.Intent
+          import android.app.*
+          import android.content.*
           import android.content.pm.PackageManager
+          import android.graphics.BitmapFactory
           import android.net.Uri
-          import android.os.Build
-          import android.os.Bundle
+          import android.os.*
+          import android.util.LruCache
           import android.util.Xml
           import androidx.activity.ComponentActivity
           import androidx.activity.compose.setContent
           import androidx.compose.foundation.*
           import androidx.compose.foundation.layout.*
-          import androidx.compose.foundation.lazy.LazyColumn
-          import androidx.compose.foundation.lazy.grid.GridCells
-          import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-          import androidx.compose.foundation.lazy.grid.items
-          import androidx.compose.foundation.lazy.items
-          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.foundation.lazy.*
+          import androidx.compose.foundation.lazy.grid.*
+          import androidx.compose.foundation.shape.*
           import androidx.compose.material3.*
           import androidx.compose.runtime.*
-          import androidx.compose.ui.Alignment
-          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.*
           import androidx.compose.ui.draw.clip
-          import androidx.compose.ui.graphics.Color
-          import androidx.compose.ui.platform.LocalConfiguration
-          import androidx.compose.ui.platform.LocalContext
+          import androidx.compose.ui.graphics.*
+          import androidx.compose.ui.layout.ContentScale
+          import androidx.compose.ui.platform.*
           import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.text.style.TextOverflow
-          import androidx.compose.ui.unit.dp
-          import androidx.compose.ui.unit.sp
+          import androidx.compose.ui.text.style.*
+          import androidx.compose.ui.unit.*
+          import androidx.compose.ui.window.*
           import androidx.core.app.ActivityCompat
           import androidx.core.app.NotificationCompat
           import androidx.core.content.ContextCompat
+          import androidx.core.view.*
           import kotlinx.coroutines.*
           import org.json.JSONObject
           import org.xmlpull.v1.XmlPullParser
           import java.io.StringReader
-          import java.net.HttpURLConnection
-          import java.net.URL
-          import java.time.ZoneId
-          import java.time.ZonedDateTime
+          import java.net.*
+          import java.time.*
           import java.time.format.DateTimeFormatter
+          import java.time.temporal.ChronoUnit
           import java.util.Locale
 
           data class NewsItem(val title: String, val source: String, val pubDate: String, val link: String, val summary: String)
-          data class BoutDetail(val boutName: String, val odds: String, val prediction: String)
-          data class UfcEvent(val title: String, val type: String, val localTime: String, val venue: String, val bouts: List<BoutDetail>)
-          data class Fighter(val name: String, val division: String, val code: String, val record: String, val odds: String, val isChamp: Boolean = false)
-          data class LiveMatchState(
-              val eventTitle: String, val weightClass: String,
-              val fighterA: String, val recordA: String, val oddsA: String, val probA: Int,
-              val fighterB: String, val recordB: String, val oddsB: String, val probB: Int,
-              val round: String, val time: String, val strikesA: Int, val strikesB: Int,
-              val tdA: Int, val tdB: Int, val status: String, val prediction: String
-          )
+          data class BoutDetail(val weightClass: String, val placement: String, val fighterA: String, val recordA: String, val fighterB: String, val recordB: String, val openingOdds: String, val liveOdds: String, val prediction: String, val isCompleted: Boolean = false, val officialResult: String = "")
+          data class UfcEvent(val title: String, val type: String, val isoDate: String, val localTime: String, val venue: String, val isCompleted: Boolean, val bouts: List<BoutDetail>)
+          data class PastFight(val result: String, val opponent: String, val method: String, val event: String)
+          data class Fighter(val name: String, val nickname: String, val division: String, val code: String, val record: String, val nationality: String, val height: String, val reach: String, val stance: String, val koWins: Int, val subWins: Int, val decWins: Int, val odds: String, val isChamp: Boolean, val mensP4p: Int, val womensP4p: Int, val history: List<PastFight>)
+          data class LiveMatchState(val eventTitle: String, val weightClass: String, val fighterA: String, val recordA: String, val oddsA: String, val probA: Int, val fighterB: String, val recordB: String, val oddsB: String, val probB: Int, val round: String, val time: String, val strikesA: Int, val strikesB: Int, val tdA: Int, val tdB: Int, val status: String, val prediction: String, val isEventOver: Boolean)
 
           fun openUrlSafely(ctx: Context, url: String) {
-              try {
-                  val safe = if (url.startsWith("http")) url else "https://www.ufc.com"
-                  ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(safe)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-              } catch (_: Throwable) {}
+              try { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(if (url.startsWith("http")) url else "https://www.ufc.com")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } catch (_: Throwable) {}
           }
 
-          fun fmtLocalTime(utcIso: String, fallback: String): String = try {
-              ZonedDateTime.parse(utcIso).withZoneSameInstant(ZoneId.systemDefault())
-                  .format(DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a z", Locale.getDefault()))
-          } catch (_: Throwable) { fallback }
+          fun fmtLocal(utcIso: String, fb: String): String = try {
+              ZonedDateTime.parse(utcIso).withZoneSameInstant(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("EEE, MMM d • h:mm a z", Locale.getDefault()))
+          } catch (_: Throwable) { fb }
+
+          object UfcImageLoader {
+              private val cache = object : LruCache<String, ImageBitmap>(80) {}
+              private val failed = mutableSetOf<String>()
+              private fun conn(u: String) = (URL(u).openConnection() as HttpURLConnection).apply {
+                  instanceFollowRedirects = true; connectTimeout = 6000; readTimeout = 6000
+                  setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 17; SM-F971B) Chrome/131.0.0.0 Mobile")
+              }
+              suspend fun load(name: String): ImageBitmap? = withContext(Dispatchers.IO) {
+                  val k = name.trim().lowercase()
+                  cache.get(k)?.let { return@withContext it }
+                  if (k in failed) return@withContext null
+                  var url = ""
+                  try {
+                      val slug = k.replace("'", "").replace(".", "").replace(Regex("[^a-z0-9]+"), "-").trim('-')
+                      val c = conn("https://www.ufc.com/athlete/$slug")
+                      if (c.responseCode in 200..299) {
+                          val h = c.inputStream.bufferedReader().use { it.readText() }
+                          url = Regex("""https://[^"'\s>]+(?:event_results_athlete_headshot|athlete_bio_full_body)[^"'\s>]+\.png""").find(h)?.value
+                              ?: Regex("""property=["']og:image["']\s+content=["'](https://[^"']+)["']""").find(h)?.groupValues?.getOrNull(1) ?: ""
+                      }
+                      c.disconnect()
+                  } catch (_: Throwable) {}
+                  if (url.isBlank()) try {
+                      val c = conn("https://site.web.api.espn.com/apis/common/v3/search?query=${URLEncoder.encode(name, "UTF-8")}&limit=1&type=player")
+                      if (c.responseCode in 200..299) {
+                          val it = JSONObject(c.inputStream.bufferedReader().use { r -> r.readText() }).optJSONArray("items")?.optJSONObject(0)
+                          url = it?.optJSONObject("image")?.optString("default") ?: it?.optJSONArray("images")?.optJSONObject(0)?.optString("url") ?: ""
+                      }
+                      c.disconnect()
+                  } catch (_: Throwable) {}
+                  if (url.isNotBlank()) try {
+                      val c = conn(url)
+                      if (c.responseCode in 200..299) {
+                          val bmp = BitmapFactory.decodeStream(c.inputStream)?.asImageBitmap()
+                          c.disconnect()
+                          if (bmp != null) { cache.put(k, bmp); return@withContext bmp }
+                      }
+                      c.disconnect()
+                  } catch (_: Throwable) {}
+                  failed.add(k); null
+              }
+          }
+
+          @Composable
+          fun FighterAvatar(name: String, size: Dp = 48.dp, isChamp: Boolean = false) {
+              var bmp by remember(name) { mutableStateOf<ImageBitmap?>(null) }
+              LaunchedEffect(name) { bmp = UfcImageLoader.load(name) }
+              val init = name.split(" ").mapNotNull { it.firstOrNull()?.uppercase() }.take(2).joinToString("")
+              Box(Modifier.size(size).clip(CircleShape).background(Color(0xFF252530)).border(if (isChamp) 2.dp else 1.dp, if (isChamp) Color(0xFFFFD700) else Color(0xFFD20A0A), CircleShape), Alignment.Center) {
+                  if (bmp != null) Image(bmp!!, name, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                  else Text(init, color = Color.White, fontSize = (size.value * 0.32f).sp, fontWeight = FontWeight.Black)
+              }
+          }
 
           object UfcData {
-              val defaultLive = LiveMatchState(
-                  "UFC Fight Night: Moicano vs. Nolan", "Lightweight Main Event • 5 Rounds",
-                  "Renato Moicano", "21-7-1", "-165", 62, "Tom Nolan", "11-1-0", "+140", 38,
-                  "2", "3:18", 34, 27, 2, 0,
-                  "Moicano controlling top half-guard, landing short elbows.",
-                  "Live AI Pick: Moicano via Sub/Decision (62% Win Prob)"
-              )
+              val completedOct31 = LiveMatchState("UFC Fight Night: Moicano vs. Nolan (Oct 31)", "Lightweight Main Event • OFFICIAL FINAL", "Tom Nolan", "12-1-0", "+140 Winner", 100, "Renato Moicano", "21-8-1", "-165", 0, "FINAL (R3)", "1:28", 69, 9, 1, 3, "EVENT OVER: Tom Nolan def. Renato Moicano via TKO (Punches & Elbows) at 1:28 of Round 3.", "Official Result Verified • Live Predictions Locked (Event Concluded)", true)
+              val upcomingNov7 = LiveMatchState("UFC Fight Night: Cortes-Acosta vs. Walker (Nov 7)", "Heavyweight Main Event • 5 Rounds", "Waldo Cortes-Acosta", "17-4-0", "-160", 61, "Johnny Walker", "23-10-0", "+135", 39, "PRE-FIGHT", "5:00", 0, 0, 0, 0, "Upcoming Headliner (Sat, Nov 7 • Meta APEX). Tap Simulate below to test round-by-round AI predictor.", "Pre-Fight AI Pick: Cortes-Acosta via KO/TKO (61% Win Prob)", false)
 
-              val seedEvents by lazy {
+              private val ROSTER_RAW = """
+          Islam Makhachev|The Eagle's Heir|Welterweight|WW|29-1-0|Russia|5'10"|70"|Southpaw|5|13|11|-380|1|1|0|WIN^Ian Machado Garry^U-DEC (R5)^UFC 330;WIN^Jack Della Maddalena^U-DEC (R5)^UFC 322;WIN^Renato Moicano^SUB D'Arce (R1)^UFC 311;WIN^Dustin Poirier^SUB D'Arce (R5)^UFC 302
+          Alexander Volkanovski|The Great|Featherweight|FW|29-4-0|Australia|5'6"|71.5"|Orthodox|14|3|12|-195|1|2|0|WIN^Movsar Evloev^U-DEC (R5)^UFC 333;WIN^Diego Lopes^U-DEC (R5)^UFC 314;LOSS^Ilia Topuria^KO (R2)^UFC 298;WIN^Yair Rodriguez^TKO (R3)^UFC 290
+          Justin Gaethje|The Highlight|Lightweight|LW|27-5-0|United States|5'11"|70"|Orthodox|20|1|6|-135|1|3|0|WIN^Ilia Topuria^KO (R3)^UFC 250;WIN^Rafael Fiziev^U-DEC (R3)^UFC 313;LOSS^Max Holloway^KO (R5)^UFC 300;WIN^Dustin Poirier^KO (R2)^UFC 291
+          Petr Yan|No Mercy|Bantamweight|BW|21-5-0|Russia|5'7"|67"|Switch|7|1|13|-175|1|4|0|WIN^Merab Dvalishvili^U-DEC (R5)^UFC 323;WIN^Deiveson Figueiredo^U-DEC (R5)^UFC Macau;WIN^Song Yadong^U-DEC (R3)^UFC 299
+          Joshua Van|The Fearless|Flyweight|FLW|16-2-0|USA / Myanmar|5'5"|65"|Orthodox|8|2|6|-130|1|5|0|WIN^Alexandre Pantoja^U-DEC (R5)^UFC 331;WIN^Brandon Royval^TKO (R4)^UFC 317;WIN^Cody Durden^U-DEC (R3)^UFC 310
+          Merab Dvalishvili|The Machine|Bantamweight|BW|21-6-0|Georgia|5'6"|68"|Orthodox|3|1|17|-200|0|6|0|LOSS^Petr Yan^U-DEC (R5)^UFC 323;WIN^Umar Nurmagomedov^U-DEC (R5)^UFC 311;WIN^Sean O'Malley^U-DEC (R5)^UFC 306
+          Ilia Topuria|El Matador|Lightweight|LW|16-1-0|Georgia / Spain|5'7"|69"|Orthodox|6|8|2|-180|0|7|0|LOSS^Justin Gaethje^KO (R3)^UFC 250;WIN^Max Holloway^KO (R3)^UFC 308;WIN^Alexander Volkanovski^KO (R2)^UFC 298
+          Sean Strickland|Tarzan|Middleweight|MW|30-6-0|United States|6'1"|76"|Orthodox|11|4|15|-150|1|8|0|WIN^Khamzat Chimaev^TKO (R4)^UFC 328;WIN^Paulo Costa^S-DEC (R5)^UFC 302;WIN^Israel Adesanya^U-DEC (R5)^UFC 293
+          Ciryl Gane|Bon Gamin|Heavyweight|HW|14-2-0|France|6'4"|81"|Orthodox|7|3|4|-340|1|9|0|WIN^Alex Pereira^TKO (R2)^UFC HW Title;NC^Tom Aspinall^NC (R1)^UFC 321;WIN^Alexander Volkov^S-DEC (R3)^UFC 310
+          Carlos Ulberg|Black Jag|Light Heavyweight|LHW|13-1-0|New Zealand|6'4"|77"|Orthodox|9|1|3|-180|1|10|0|WIN^Jiri Prochazka^KO (R2)^UFC 327;WIN^Volkan Oezdemir^U-DEC (R3)^UFC Macau;WIN^Alonzo Menifield^KO (R1)^UFC St. Louis
+          Charles Oliveira|Do Bronx|Lightweight (BMF)|LW|35-10-0|Brazil|5'10"|74"|Orthodox|10|21|4|-155|1|11|0|WIN^Michael Chandler^U-DEC (R5)^UFC 309;LOSS^Arman Tsarukyan^S-DEC (R3)^UFC 300;WIN^Beneil Dariush^TKO (R1)^UFC 289
+          Alex Pereira|Poatan|Heavyweight / LHW|HW|12-4-0|Brazil|6'4"|79"|Orthodox|10|0|2|-135|0|12|0|LOSS^Ciryl Gane^TKO (R2)^UFC HW;WIN^Khalil Rountree^TKO (R4)^UFC 307;WIN^Jiri Prochazka^TKO (R2)^UFC 303
+          Valentina Shevchenko|Bullet|Women's Flyweight|WMMA|25-4-1|Kyrgyzstan|5'5"|66.5"|Southpaw|8|7|10|-210|0|0|1|WIN^Manon Fiorot^U-DEC (R5)^UFC 315;WIN^Alexa Grasso^U-DEC (R5)^UFC 306;DRAW^Alexa Grasso^S-DRAW^Noche UFC
+          Kayla Harrison|Judo Queen|Women's Bantamweight|WMMA|19-1-0|United States|5'8"|66"|Southpaw|6|8|5|-140|1|0|2|WIN^Julianna Pena^SUB Armbar (R2)^UFC 316;WIN^Ketlen Vieira^U-DEC (R3)^UFC 307;WIN^Holly Holm^SUB RNC (R2)^UFC 300
+          Zhang Weili|Magnum|Women's Strawweight|WMMA|26-3-0|China|5'4"|63"|Switch|11|8|7|-190|0|0|3|WIN^Tatiana Suarez^U-DEC (R5)^UFC 312;WIN^Yan Xiaonan^U-DEC (R5)^UFC 300;WIN^Amanda Lemos^U-DEC (R5)^UFC 292
+          Natalia Silva|Silva|Women's Flyweight|WMMA|19-5-1|Brazil|5'4"|65"|Orthodox|5|7|7|-215|1|0|4|WIN^Wang Cong^U-DEC (R5)^UFC 332;WIN^Jessica Andrade^U-DEC (R3)^UFC Vegas 97;WIN^Viviane Araujo^U-DEC (R3)^UFC Vegas 85
+          Mackenzie Dern|Dern|Women's Strawweight|WMMA|16-5-0|USA / Brazil|5'4"|63"|Orthodox|0|9|7|-140|1|0|5|WIN^Virna Jandiroba^SUB Armbar (R3)^UFC SW Title;WIN^Amanda Ribas^SUB Armbar (R3)^UFC Vegas 101;WIN^Loopy Godinez^U-DEC (R3)^UFC Abu Dhabi
+          Alexa Grasso|Grasso|Women's Flyweight|WMMA|16-4-1|Mexico|5'5"|66"|Orthodox|4|2|10|-130|0|0|6|LOSS^Valentina Shevchenko^U-DEC (R5)^UFC 306;WIN^Valentina Shevchenko^SUB RNC (R4)^UFC 285
+          Manon Fiorot|The Beast|Women's Flyweight|WMMA|12-2-0|France|5'7"|66"|Orthodox|6|0|6|-160|0|0|7|LOSS^Valentina Shevchenko^U-DEC (R5)^UFC 315;WIN^Erin Blanchfield^U-DEC (R5)^UFC AC;WIN^Rose Namajunas^U-DEC (R3)^UFC Paris
+          Tatiana Suarez|Suarez|Women's Strawweight|WMMA|13-1-0|United States|5'5"|66"|Southpaw|2|6|5|-235|0|0|8|LOSS^Zhang Weili^U-DEC (R5)^UFC 312;WIN^Jessica Andrade^SUB (R2)^UFC Nashville;WIN^Montana De La Rosa^SUB (R2)^UFC Vegas 70
+          Julianna Pena|Venezuelan Vixen|Women's Bantamweight|WMMA|12-6-0|United States|5'6"|69"|Orthodox|3|5|4|+150|0|0|9|LOSS^Kayla Harrison^SUB (R2)^UFC 316;WIN^Raquel Pennington^S-DEC (R5)^UFC 307;LOSS^Amanda Nunes^U-DEC (R5)^UFC 277
+          Virna Jandiroba|Carcara|Women's Strawweight|WMMA|23-4-0|Brazil|5'3"|64"|Orthodox|1|14|8|+195|0|0|10|WIN^Amanda Lemos^SUB Armbar (R2)^UFC Vegas 94;WIN^Loopy Godinez^U-DEC (R3)^UFC AC;WIN^Marina Rodriguez^U-DEC (R3)^UFC 288
+          Tom Nolan|Big Train|Lightweight|LW|12-1-0|Australia|6'3"|73"|Southpaw|6|1|5|-150|0|0|0|WIN^Renato Moicano^TKO Elbows & Punches (R3 1:28)^UFC Fight Night (Oct 31, 2026);WIN^Alex Reyes^U-DEC (R3)^UFC 305;WIN^Victor Martinez^TKO (R1)^UFC Vegas 92
+          Renato Moicano|Money|Lightweight|LW|21-8-1|Brazil|5'11"|72"|Orthodox|2|10|9|+130|0|0|0|LOSS^Tom Nolan^TKO (R3 1:28)^UFC Fight Night (Oct 31, 2026);WIN^Chris Duncan^SUB RNC (R2)^UFC Vegas;LOSS^Islam Makhachev^SUB (R1)^UFC 311
+          Waldo Cortes-Acosta|Salsa Boy|Heavyweight|HW|17-4-0|Dominican Rep.|6'4"|78"|Orthodox|8|1|8|-160|0|0|0|LOSS^Alexander Volkov^U-DEC (R3)^UFC 2026;WIN^Derrick Lewis^TKO (R2)^UFC FN;WIN^Robelis Despaigne^U-DEC (R3)^UFC St. Louis
+          Johnny Walker|Walker|Heavyweight|HW|23-10-0|Brazil|6'6"|82"|Orthodox|18|3|2|+135|0|0|0|WIN^Mick Parkin^KO Knee (R1)^UFC 332;LOSS^Volkan Oezdemir^KO (R1)^UFC Riyadh;LOSS^Magomed Ankalaev^KO (R2)^UFC Vegas 84
+          Jiri Prochazka|BJP|Light Heavyweight|LHW|31-5-1|Czechia|6'3"|80"|Orthodox|27|3|1|-195|0|0|0|LOSS^Carlos Ulberg^KO (R2)^UFC 327;WIN^Jamahal Hill^TKO (R3)^UFC 311;WIN^Aleksandar Rakic^TKO (R2)^UFC 300
+          Amanda Nunes|The Lioness|Women's Bantamweight|WMMA|23-5-0|Brazil|5'8"|69"|Orthodox|13|4|6|+120|0|0|0|WIN^Irene Aldana^U-DEC (R5)^UFC 289;WIN^Julianna Pena^U-DEC (R5)^UFC 277;WIN^Megan Anderson^SUB (R1)^UFC 259
+          Diego Lopes|Lopes|Lightweight / FW|LW|26-6-0|Brazil|5'11"|72"|Orthodox|10|12|4|+130|0|0|0|WIN^Brian Ortega^U-DEC (R3)^UFC 306;WIN^Dan Ige^U-DEC (R3)^UFC 303;WIN^Sodiq Yusuff^TKO (R1)^UFC 300
+          Josh Hokit|Hokit|Heavyweight|HW|10-0-0|United States|6'1"|73"|Orthodox|6|3|1|+275|0|0|0|WIN^Curtis Blaydes^TKO (R2)^UFC FN 2026;WIN^Lukasz Brzeski^SUB (R1)^UFC Apex
+          """.trimIndent()
+
+              val seedRoster: List<Fighter> by lazy {
+                  ROSTER_RAW.lines().mapNotNull { l ->
+                      val p = l.split("|")
+                      if (p.size < 17) null else Fighter(
+                          p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8],
+                          p[9].toInt(), p[10].toInt(), p[11].toInt(), p[12], p[13] == "1", p[14].toInt(), p[15].toInt(),
+                          p[16].split(";").mapNotNull { h -> val hp = h.split("^"); if (hp.size >= 4) PastFight(hp[0], hp[1], hp[2], hp[3]) else null }
+                      )
+                  }
+              }
+
+              val seedEvents: List<UfcEvent> by lazy {
                   listOf(
-                      UfcEvent("UFC Fight Night: Moicano vs. Nolan", "FIGHT NIGHT", fmtLocalTime("2026-11-01T00:00:00Z", "Sun, Nov 1 • 12:00 AM GMT"), "Meta Apex, Las Vegas", listOf(
-                          BoutDetail("LW: Renato Moicano (21-7-1) vs. Tom Nolan (11-1-0)", "Moicano -165 / Nolan +140", "Pick: Moicano (62%)"),
-                          BoutDetail("WW: Randy Brown (20-8-0) vs. Jacobe Smith (13-0-0)", "Brown +180 / Smith -220", "Pick: Smith (68%)"),
-                          BoutDetail("WBW: Yana Santos (17-8-0) vs. Luana Santos (11-2-0)", "Y. Santos +210 / L. Santos -260", "Pick: L. Santos (71%)"),
-                          BoutDetail("FW: Julian Erosa (31-14-0) vs. JeongYeong Lee (11-3-0)", "Erosa +120 / Lee -140", "Pick: Lee (58%)")
+                      UfcEvent("UFC Fight Night: Moicano vs. Nolan", "COMPLETED", "2026-10-31", "COMPLETED • Oct 31 / Nov 1", "Meta APEX, Las Vegas", true, listOf(
+                          BoutDetail("Lightweight", "MAIN EVENT", "Tom Nolan", "12-1-0", "Renato Moicano", "21-8-1", "+155 / -185", "+140 / -165", "Official Final", true, "WINNER: Tom Nolan via TKO (Punches & Elbows) • R3 1:28"),
+                          BoutDetail("Welterweight", "CO-MAIN", "Jacobe Smith", "14-0-0", "Randy Brown", "20-9-0", "-205 / +170", "-220 / +180", "Official Final", true, "WINNER: Jacobe Smith via Unanimous Decision (30-26 x3)"),
+                          BoutDetail("Women's Bantamweight", "MAIN CARD", "Luana Santos", "12-2-0", "Yana Santos", "17-9-0", "-240 / +195", "-260 / +210", "Official Final", true, "WINNER: Luana Santos via Unanimous Decision (29-28 x3)"),
+                          BoutDetail("Welterweight", "MAIN CARD", "Jean-Paul Lebosnoyani", "12-2-0", "Farman Hasanov", "5-1-0", "-130 / +110", "-135 / +115", "Official Final", true, "WINNER: Jean-Paul Lebosnoyani via TKO (Doctor Stoppage) • R3 2:11"),
+                          BoutDetail("Featherweight", "MAIN CARD", "Julian Erosa", "32-14-0", "JeongYeong Lee", "11-4-0", "+130 / -155", "+120 / -140", "Official Final", true, "WINNER: Julian Erosa via KO/TKO • R1 1:31"),
+                          BoutDetail("Flyweight", "MAIN CARD", "Cody Durden", "19-11-1", "Ode Osbourne", "13-9-0", "-150 / +125", "-165 / +140", "Official Final", true, "WINNER: Cody Durden via Unanimous Decision (29-28 x3)")
                       )),
-                      UfcEvent("UFC Fight Night: Bonfim vs. Brady", "FIGHT NIGHT", fmtLocalTime("2026-11-07T22:00:00Z", "Sat, Nov 7 • 10:00 PM GMT"), "Meta Apex, Las Vegas", listOf(
-                          BoutDetail("WW: Gabriel Bonfim (20-1-0) vs. Sean Brady (19-2-0)", "Bonfim +145 / Brady -175", "Pick: Brady (64%)"),
-                          BoutDetail("WSW: Tatiana Suarez (13-1-0) vs. Virna Jandiroba (23-4-0)", "Suarez -230 / Jandiroba +190", "Pick: Suarez (70%)"),
-                          BoutDetail("HW: Waldo Cortes-Acosta (17-4-0) vs. Johnny Walker (23-10-0)", "Acosta -155 / Walker +130", "Pick: Acosta (60%)")
+                      UfcEvent("UFC Fight Night: Cortes-Acosta vs. Walker", "FIGHT NIGHT", "2026-11-07", fmtLocal("2026-11-08T01:00:00Z", "Sun, Nov 8 • 1:00 AM GMT (Prelims 10 PM Sat)"), "Meta APEX, Las Vegas", false, listOf(
+                          BoutDetail("Heavyweight", "MAIN EVENT", "Waldo Cortes-Acosta", "17-4-0", "Johnny Walker", "23-10-0", "Open: -145 / +120", "Live: -160 / +135", "Pick: Cortes-Acosta via KO/TKO (61%)"),
+                          BoutDetail("Women's Strawweight", "CO-MAIN", "Tatiana Suarez", "13-1-0", "Virna Jandiroba", "23-4-0", "Open: -210 / +175", "Live: -235 / +195", "Pick: Suarez via Dec/Sub (70%)"),
+                          BoutDetail("Bantamweight", "MAIN CARD", "Davey Grant", "18-8-0", "Elijah Smith", "10-1-0", "Open: +155 / -185", "Live: +170 / -205", "Pick: Elijah Smith via Dec (66%)"),
+                          BoutDetail("Welterweight", "MAIN CARD", "Seokhyeon Ko", "13-3-0", "Wellington Turman", "18-8-0", "Open: -130 / +110", "Live: -145 / +122", "Pick: Ko via Decision (59%)"),
+                          BoutDetail("Light Heavyweight", "MAIN CARD", "Billy Elekana", "10-2-0", "Lucas Fernando", "14-3-0", "Open: -120 / +100", "Live: -135 / +115", "Pick: Elekana via TKO (57%)"),
+                          BoutDetail("Middleweight", "MAIN CARD", "Mantas Kondratavicius", "9-1-0", "Andre Petroski", "13-6-0", "Open: +115 / -135", "Live: +105 / -125", "Pick: Petroski via Sub/Dec (56%)"),
+                          BoutDetail("Women's Flyweight", "PRELIMS", "Karine Silva", "19-7-0", "Gabriella Fernandes", "11-4-0", "Open: -195 / +165", "Live: -215 / +180", "Pick: Karine Silva via Sub (68%)")
                       )),
-                      UfcEvent("UFC 334: Gane vs. Hokit", "PPV", fmtLocalTime("2026-11-15T03:00:00Z", "Sun, Nov 15 • 3:00 AM GMT"), "Madison Square Garden, NYC", listOf(
-                          BoutDetail("HW Title: Ciryl Gane (C) vs. Josh Hokit", "Gane -340 / Hokit +270", "Pick: Gane via TKO/Dec (77%)"),
-                          BoutDetail("WBW Title: Kayla Harrison (C) vs. Amanda Nunes", "Harrison -135 / Nunes +115", "Pick: Harrison via Dec (57%)"),
-                          BoutDetail("MW: Caio Borralho vs. Yousri Belgaroui", "Borralho -260 / Belgaroui +210", "Pick: Borralho (72%)"),
-                          BoutDetail("WW: Uros Medic vs. Kevin Holland", "Medic +130 / Holland -155", "Pick: Holland (61%)")
+                      UfcEvent("UFC 334: Gane vs. Hokit", "PPV", "2026-11-14", fmtLocal("2026-11-15T03:00:00Z", "Sun, Nov 15 • 3:00 AM GMT"), "Madison Square Garden, NYC", false, listOf(
+                          BoutDetail("Heavyweight Title", "MAIN EVENT", "Ciryl Gane", "14-2-0", "Josh Hokit", "10-0-0", "Open: -310 / +250", "Live: -345 / +275", "Pick: Gane via TKO/Dec (77%)"),
+                          BoutDetail("Women's Bantamweight Title", "CO-MAIN", "Kayla Harrison", "19-1-0", "Amanda Nunes", "23-5-0", "Open: -125 / +105", "Live: -140 / +120", "Pick: Harrison via Dec/Sub (58%)"),
+                          BoutDetail("Middleweight", "MAIN CARD", "Caio Borralho", "17-1-0", "Yousri Belgaroui", "9-3-0", "Open: -240 / +195", "Live: -265 / +215", "Pick: Borralho via Dec (72%)"),
+                          BoutDetail("Welterweight", "MAIN CARD", "Uros Medic", "11-3-0", "Kevin Holland", "27-12-0", "Open: +140 / -165", "Live: +130 / -155", "Pick: Holland via KO/Sub (61%)")
                       )),
-                      UfcEvent("UFC Fight Night: Prochazka vs. Stirling", "FIGHT NIGHT", fmtLocalTime("2026-11-21T19:00:00Z", "Sat, Nov 21 • 7:00 PM GMT"), "ABHA Arena, Doha, Qatar", listOf(
-                          BoutDetail("LHW: Jiri Prochazka vs. Navajo Stirling", "Prochazka -190 / Stirling +160", "Pick: Prochazka (65%)"),
-                          BoutDetail("FW: Aljamain Sterling vs. Kevin Vallejos", "Sterling -210 / Vallejos +175", "Pick: Sterling (67%)"),
-                          BoutDetail("LW: Dan Hooker vs. Brian Ortega", "Hooker -150 / Ortega +125", "Pick: Hooker (60%)")
+                      UfcEvent("UFC Fight Night: Prochazka vs. Stirling", "FIGHT NIGHT", "2026-11-21", fmtLocal("2026-11-21T19:00:00Z", "Sat, Nov 21 • 7:00 PM GMT"), "ABHA Arena, Doha, Qatar", false, listOf(
+                          BoutDetail("Light Heavyweight", "MAIN EVENT", "Jiri Prochazka", "31-5-1", "Navajo Stirling", "8-0-0", "Open: -175 / +145", "Live: -195 / +162", "Pick: Prochazka via KO/TKO (66%)"),
+                          BoutDetail("Featherweight", "CO-MAIN", "Aljamain Sterling", "24-5-0", "Kevin Vallejos", "15-1-0", "Open: -195 / +165", "Live: -210 / +175", "Pick: Sterling via Dec (67%)"),
+                          BoutDetail("Lightweight", "MAIN CARD", "Dan Hooker", "24-12-0", "Brian Ortega", "16-5-0", "Open: -140 / +120", "Live: -155 / +130", "Pick: Hooker via TKO/Dec (61%)")
                       )),
-                      UfcEvent("UFC 335: Oliveira vs. Lopes", "PPV", fmtLocalTime("2026-12-13T03:00:00Z", "Sun, Dec 13 • 3:00 AM GMT"), "T-Mobile Arena, Las Vegas", listOf(
-                          BoutDetail("BMF Title (LW): Charles Oliveira (C) vs. Diego Lopes", "Oliveira -155 / Lopes +130", "Pick: Oliveira via Sub (61%)"),
-                          BoutDetail("FLW Title: Joshua Van (C) vs. Manel Kape", "Van -125 / Kape +105", "Pick: Van via Dec (55%)"),
-                          BoutDetail("Interim WW: Carlos Prates vs. Michael Morales", "Prates -130 / Morales +110", "Pick: Prates via KO (56%)"),
-                          BoutDetail("HW: Sergei Pavlovich vs. Alex Pereira", "Pavlovich +115 / Pereira -135", "Pick: Pereira via KO (58%)")
+                      UfcEvent("UFC 335: Oliveira vs. Lopes", "PPV", "2026-12-12", fmtLocal("2026-12-13T03:00:00Z", "Sun, Dec 13 • 3:00 AM GMT"), "T-Mobile Arena, Las Vegas", false, listOf(
+                          BoutDetail("BMF Title (LW)", "MAIN EVENT", "Charles Oliveira", "35-10-0", "Diego Lopes", "26-6-0", "Open: -145 / +120", "Live: -155 / +130", "Pick: Oliveira via Sub (61%)"),
+                          BoutDetail("Flyweight Title", "CO-MAIN", "Joshua Van", "16-2-0", "Manel Kape", "20-7-0", "Open: -120 / +100", "Live: -130 / +110", "Pick: Van via Decision (56%)"),
+                          BoutDetail("Heavyweight", "MAIN CARD", "Sergei Pavlovich", "18-3-0", "Alex Pereira", "12-4-0", "Open: +120 / -140", "Live: +115 / -135", "Pick: Pereira via KO/TKO (58%)")
                       ))
                   )
               }
 
-              val seedRoster = listOf(
-                  Fighter("Ciryl Gane", "Heavyweight", "HW", "13-2-0", "-340", true),
-                  Fighter("Carlos Ulberg", "Light Heavyweight", "LHW", "12-1-0", "-180", true),
-                  Fighter("Sean Strickland", "Middleweight", "MW", "29-6-0", "-150", true),
-                  Fighter("Islam Makhachev", "Welterweight", "WW", "27-1-0", "-380", true),
-                  Fighter("Justin Gaethje", "Lightweight", "LW", "26-5-0", "-135", true),
-                  Fighter("Charles Oliveira", "Lightweight (BMF)", "LW", "35-10-0", "-155", true),
-                  Fighter("Alexander Volkanovski", "Featherweight", "FW", "29-4-0", "-190", true),
-                  Fighter("Petr Yan", "Bantamweight", "BW", "21-5-0", "-175", true),
-                  Fighter("Joshua Van", "Flyweight", "FLW", "15-2-0", "-125", true),
-                  Fighter("Kayla Harrison", "Women's Bantamweight", "WMMA", "19-1-0", "-135", true),
-                  Fighter("Natalia Silva", "Women's Flyweight", "WMMA", "19-5-1", "-210", true),
-                  Fighter("Mackenzie Dern", "Women's Strawweight", "WMMA", "15-5-0", "-140", true),
-                  Fighter("Alex Pereira", "Heavyweight / LHW", "HW", "12-3-0", "-135"),
-                  Fighter("Sergei Pavlovich", "Heavyweight", "HW", "18-3-0", "+115"),
-                  Fighter("Alexander Volkov", "Heavyweight", "HW", "41-11-0", "-160"),
-                  Fighter("Jiri Prochazka", "Light Heavyweight", "LHW", "31-5-1", "-190"),
-                  Fighter("Israel Adesanya", "Middleweight", "MW", "24-5-0", "-175"),
-                  Fighter("Caio Borralho", "Middleweight", "MW", "17-1-0", "-260"),
-                  Fighter("Bo Nickal", "Middleweight", "MW", "7-0-0", "-165"),
-                  Fighter("Sean Brady", "Welterweight", "WW", "19-2-0", "-175"),
-                  Fighter("Gabriel Bonfim", "Welterweight", "WW", "20-1-0", "+145"),
-                  Fighter("Carlos Prates", "Welterweight", "WW", "21-6-0", "-130"),
-                  Fighter("Renato Moicano", "Lightweight", "LW", "21-7-1", "-165"),
-                  Fighter("Tom Nolan", "Lightweight", "LW", "11-1-0", "+140"),
-                  Fighter("Dan Hooker", "Lightweight", "LW", "24-12-0", "-150"),
-                  Fighter("Diego Lopes", "Featherweight / LW", "FW", "26-6-0", "+130"),
-                  Fighter("Movsar Evloev", "Featherweight", "FW", "20-1-0", "-220"),
-                  Fighter("Merab Dvalishvili", "Bantamweight", "BW", "21-6-0", "-200"),
-                  Fighter("Manel Kape", "Flyweight", "FLW", "20-7-0", "+105"),
-                  Fighter("Amanda Nunes", "Women's Bantamweight", "WMMA", "23-5-0", "+115"),
-                  Fighter("Tatiana Suarez", "Women's Strawweight", "WMMA", "13-1-0", "-230")
-              )
-
               private fun httpGet(u: String): String = try {
-                  val c = (URL(u).openConnection() as HttpURLConnection).apply {
-                      connectTimeout = 6000; readTimeout = 6000
-                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 17; SM-F971B)")
-                  }
+                  val c = (URL(u).openConnection() as HttpURLConnection).apply { connectTimeout = 6000; readTimeout = 6000; setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 17)") }
                   if (c.responseCode in 200..299) c.inputStream.bufferedReader().use { it.readText() } else ""
               } catch (_: Throwable) { "" }
 
@@ -275,89 +319,60 @@ jobs:
                       if (arr != null) for (i in 0 until arr.length()) {
                           val a = arr.getJSONObject(i)
                           val h = a.optString("headline").trim()
-                          val d = a.optString("description").trim()
-                          val p = a.optString("published").take(16).replace("T", " ")
-                          val l = a.optJSONObject("links")?.optJSONObject("web")?.optString("href") ?: "https://www.ufc.com"
-                          if (h.isNotBlank()) out.add(NewsItem(h, "ESPN UFC", p, l, d))
+                          if (h.isNotBlank()) out.add(NewsItem(h, "ESPN UFC", a.optString("published").take(16).replace("T", " "), a.optJSONObject("links")?.optJSONObject("web")?.optString("href") ?: "https://www.ufc.com", a.optString("description").trim()))
                       }
                   } catch (_: Throwable) {}
                   try {
                       val xml = httpGet("https://www.sherdog.com/rss/news.xml")
                       if (xml.isNotBlank()) {
                           val xp = Xml.newPullParser().apply { setInput(StringReader(xml)) }
-                          var ev = xp.eventType; var inItem = false; var t = ""; var l = ""; var d = ""
+                          var ev = xp.eventType; var inIt = false; var t = ""; var l = ""; var d = ""
                           while (ev != XmlPullParser.END_DOCUMENT) {
                               val n = xp.name ?: ""
                               if (ev == XmlPullParser.START_TAG) {
-                                  if (n.equals("item", true)) { inItem = true; t = ""; l = ""; d = "" }
-                                  else if (inItem && n.equals("title", true)) t = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inItem && n.equals("link", true)) l = try { xp.nextText().trim() } catch (_: Throwable) { "" }
-                                  else if (inItem && n.equals("description", true)) d = try { xp.nextText().replace(Regex("<.*?>"), "").trim() } catch (_: Throwable) { "" }
-                              } else if (ev == XmlPullParser.END_TAG && n.equals("item", true) && inItem) {
+                                  if (n.equals("item", true)) { inIt = true; t = ""; l = ""; d = "" }
+                                  else if (inIt && n.equals("title", true)) t = try { xp.nextText().trim() } catch (_: Throwable) { "" }
+                                  else if (inIt && n.equals("link", true)) l = try { xp.nextText().trim() } catch (_: Throwable) { "" }
+                                  else if (inIt && n.equals("description", true)) d = try { xp.nextText().replace(Regex("<.*?>"), "").trim() } catch (_: Throwable) { "" }
+                              } else if (ev == XmlPullParser.END_TAG && n.equals("item", true) && inIt) {
                                   if (t.isNotBlank()) out.add(NewsItem(t, "Sherdog RSS", "Latest", l.ifBlank { "https://www.sherdog.com" }, d))
-                                  inItem = false
+                                  inIt = false
                               }
                               ev = xp.next()
                           }
                       }
                   } catch (_: Throwable) {}
                   if (out.isEmpty()) listOf(
-                      NewsItem("UFC Fight Night Live Results, Odds & Round Predictions", "UFC Pulse", "Live Now", "https://www.ufc.com", "Live round-by-round octagon tracking and fighter odds."),
-                      NewsItem("UFC 334 & UFC 335 Title Fight Cards Official", "UFC Pulse", "Breaking", "https://www.ufc.com", "Full PPV and Fight Night schedules converted to local GMT/IST time.")
+                      NewsItem("Tom Nolan Stops Renato Moicano in Round 3 at UFC Fight Night", "UFC Official", "Final Result", "https://www.ufc.com", "Australia's Tom Nolan finished Renato Moicano via third-round TKO at 1:28."),
+                      NewsItem("Waldo Cortes-Acosta vs. Johnny Walker Main Event Set for Nov. 7", "UFC Official", "Fight Week", "https://www.ufc.com", "Heavyweights headline Meta APEX following Sean Brady's injury withdrawal.")
                   ) else out
               }
           }
 
           object Notifier {
-              private const val RSS_CH = "ufc_rss_v11"
-              private const val BAR_CH = "ufc_bar_v11"
-
+              private const val BAR_CH = "ufc_bar_v12"
               fun init(ctx: Context) {
                   try {
                       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                           val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                          nm.createNotificationChannel(NotificationChannel(RSS_CH, "UFC RSS Alerts", NotificationManager.IMPORTANCE_HIGH))
                           nm.createNotificationChannel(NotificationChannel(BAR_CH, "One UI Live Fight Ticker", NotificationManager.IMPORTANCE_DEFAULT).apply { setSound(null, null) })
                       }
                   } catch (_: Throwable) {}
               }
-
-              private fun canNotify(ctx: Context): Boolean = Build.VERSION.SDK_INT < 33 ||
-                  ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
-
-              fun sendRss(ctx: Context, title: String, src: String, url: String) {
-                  try {
-                      if (!canNotify(ctx)) return
-                      init(ctx)
-                      val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      val id = (title.hashCode() and 0x7FFFFFFF)
-                      val pi = PendingIntent.getActivity(ctx, id, Intent(Intent.ACTION_VIEW, Uri.parse(if (url.startsWith("http")) url else "https://www.ufc.com")), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-                      val n = NotificationCompat.Builder(ctx, RSS_CH)
-                          .setSmallIcon(android.R.drawable.ic_popup_reminder)
-                          .setContentTitle("UFC News • $src").setContentText(title)
-                          .setPriority(NotificationCompat.PRIORITY_HIGH).setContentIntent(pi).setAutoCancel(true).build()
-                      nm.notify(id, n)
-                  } catch (_: Throwable) {}
-              }
-
               fun updateLiveBar(ctx: Context, m: LiveMatchState, active: Boolean) {
                   try {
                       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      if (!active) { nm.cancel(11001); return }
-                      if (!canNotify(ctx)) return
+                      if (!active) { nm.cancel(12001); return }
+                      if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
                       init(ctx)
-                      val pi = PendingIntent.getActivity(ctx, 11001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-                      val title = "R${m.round} (${m.time}) • ${m.fighterA} (${m.oddsA}) vs ${m.fighterB} (${m.oddsB})"
-                      val body = "${m.prediction} | ${m.status}"
+                      val pi = PendingIntent.getActivity(ctx, 12001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                       val n = NotificationCompat.Builder(ctx, BAR_CH)
                           .setSmallIcon(android.R.drawable.ic_media_play)
-                          .setContentTitle(title).setContentText(body)
-                          .setSubText("One UI Live Ticker • ${m.probA}%/${m.probB}%")
-                          .setStyle(NotificationCompat.BigTextStyle().bigText(body))
-                          .setOngoing(true).setOnlyAlertOnce(true)
-                          .setProgress(100, m.probA.coerceIn(0, 100), false)
-                          .setContentIntent(pi).build()
-                      nm.notify(11001, n)
+                          .setContentTitle("${if (m.isEventOver) "FINAL" else m.round} • ${m.fighterA} vs ${m.fighterB}")
+                          .setContentText("${m.prediction} | ${m.status}")
+                          .setSubText(if (m.isEventOver) "Official Final Result" else "One UI Live Ticker • ${m.probA}%/${m.probB}%")
+                          .setOngoing(true).setOnlyAlertOnce(true).setProgress(100, m.probA.coerceIn(0, 100), false).setContentIntent(pi).build()
+                      nm.notify(12001, n)
                   } catch (_: Throwable) {}
               }
           }
@@ -366,25 +381,30 @@ jobs:
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   try {
+                      WindowCompat.setDecorFitsSystemWindows(window, false)
+                      WindowInsetsControllerCompat(window, window.decorView).apply {
+                          systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                          hide(WindowInsetsCompat.Type.statusBars())
+                      }
                       Notifier.init(this)
                       if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                           ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
                       }
                   } catch (_: Throwable) {}
                   setContent {
-                      MaterialTheme(darkColorScheme(primary = Color(0xFFD20A0A), background = Color(0xFF0A0A0C), surface = Color(0xFF16161B))) {
-                          UfcApp()
-                      }
+                      MaterialTheme(darkColorScheme(primary = Color(0xFFD20A0A), background = Color(0xFF0A0A0C), surface = Color(0xFF16161B))) { UfcApp() }
                   }
               }
           }
 
-          fun nextRound(m: LiveMatchState): LiveMatchState = when (m.round) {
-              "1" -> m.copy(round = "2", time = "3:18", oddsA = "-185", oddsB = "+155", probA = 64, probB = 36, strikesA = m.strikesA + 18, strikesB = m.strikesB + 11, tdA = m.tdA + 1, status = "${m.fighterA} secures body-lock takedown against the cage.", prediction = "Live AI Pick: ${m.fighterA} via Dec/Sub (64% prob)")
-              "2" -> m.copy(round = "3", time = "2:05", oddsA = "-290", oddsB = "+230", probA = 76, probB = 24, strikesA = m.strikesA + 24, strikesB = m.strikesB + 9, tdA = m.tdA + 1, status = "${m.fighterA} takes the back in R3 and threatens rear-naked choke.", prediction = "Live AI Pick: ${m.fighterA} Heavy Favorite via Sub/TKO (76% prob)")
-              "3" -> m.copy(round = "4", time = "1:40", oddsA = "-450", oddsB = "+340", probA = 84, probB = 16, strikesA = m.strikesA + 21, strikesB = m.strikesB + 12, status = "${m.fighterA} ahead 30-27 on live scorecards entering championship rounds.", prediction = "Live AI Pick: ${m.fighterA} Decision Lock (84% prob)")
-              "4" -> m.copy(round = "FINAL", time = "5:00", oddsA = "-900", oddsB = "+600", probA = 95, probB = 5, status = "OFFICIAL RESULT: ${m.fighterA} def. ${m.fighterB} via Unanimous Decision (49-46, 49-46, 48-47).", prediction = "Final Verified Result: ${m.fighterA} Winner")
-              else -> m.copy(round = "1", time = "4:12", oddsA = "-155", oddsB = "+130", probA = 56, probB = 44, strikesA = 12, strikesB = 10, tdA = 0, tdB = 0, status = "Round 1 underway. Fighters trading calf kicks in center Octagon.", prediction = "Live AI Pick: Opening Round Toss-Up • ${m.fighterA} (56%)")
+          fun simNextRound(m: LiveMatchState): LiveMatchState {
+              if (m.isEventOver) return m
+              return when (m.round) {
+                  "PRE-FIGHT" -> m.copy(round = "R1", time = "3:40", oddsA = "-175", oddsB = "+145", probA = 64, probB = 36, strikesA = 16, strikesB = 11, status = "${m.fighterA} lands heavy low kicks and counters ${m.fighterB}.", prediction = "Live AI Pick: ${m.fighterA} via KO/TKO (64% prob)")
+                  "R1" -> m.copy(round = "R2", time = "2:12", oddsA = "-260", oddsB = "+210", probA = 73, probB = 27, strikesA = 38, strikesB = 22, status = "${m.fighterA} rocks ${m.fighterB} with a right cross against the fence.", prediction = "Live AI Pick: ${m.fighterA} Heavy Favorite (73% prob)")
+                  "R2" -> m.copy(round = "SIM FINAL", time = "1:45", oddsA = "-800", oddsB = "+550", probA = 94, probB = 6, strikesA = 54, strikesB = 26, status = "SIMULATED FINISH: ${m.fighterA} finishes ${m.fighterB} via Round 3 TKO.", prediction = "Simulation Complete • Tap Again to Reset Pre-Fight Line")
+                  else -> UfcData.upcomingNov7
+              }
           }
 
           @Composable
@@ -395,152 +415,337 @@ jobs:
               var tab by remember { mutableIntStateOf(0) }
               var threePane by remember { mutableStateOf(false) }
               var pinBar by remember { mutableStateOf(true) }
-              var live by remember { mutableStateOf(UfcData.defaultLive) }
+              var hideBars by remember { mutableStateOf(true) }
+              var showUpcoming by remember { mutableStateOf(false) }
+              var live by remember { mutableStateOf(UfcData.completedOct31) }
               var news by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
               var loading by remember { mutableStateOf(true) }
               var search by remember { mutableStateOf("") }
-              var divFilter by remember { mutableStateOf("ALL") }
+              var divFilter by remember { mutableStateOf("MEN'S P4P") }
               var evFilter by remember { mutableStateOf("ALL") }
+              var selEvent by remember { mutableStateOf<UfcEvent?>(null) }
+              var selFighter by remember { mutableStateOf<Fighter?>(null) }
+
+              fun findFighter(name: String): Fighter = UfcData.seedRoster.find { it.name.equals(name, true) }
+                  ?: Fighter(name, "UFC Contender", "UFC Division", "MMA", "15-4-0", "International", "5'11\"", "72\"", "Orthodox", 7, 3, 5, "-120", false, 0, 0, listOf(PastFight("WIN", "UFC Opponent", "Decision (R3 5:00)", "UFC Fight Night")))
 
               fun sync() {
                   loading = true
-                  scope.launch {
-                      val fetched = UfcData.fetchNews()
-                      news = fetched
-                      loading = false
-                      Notifier.updateLiveBar(ctx, live, pinBar)
-                  }
+                  scope.launch { news = UfcData.fetchNews(); loading = false; Notifier.updateLiveBar(ctx, live, pinBar) }
               }
               LaunchedEffect(Unit) { sync() }
 
-              Column(Modifier.fillMaxSize().background(Color(0xFF0A0A0C))) {
-                  Row(Modifier.fillMaxWidth().background(Color(0xFF121216)).padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+              if (selFighter != null) FighterProfileDialog(selFighter!!) { selFighter = null }
+
+              Column(Modifier.fillMaxSize().background(Color(0xFF0A0A0C)).windowInsetsPadding(WindowInsets.safeDrawing)) {
+                  Row(Modifier.fillMaxWidth().background(Color(0xFF121216)).padding(horizontal = 12.dp, vertical = 10.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                       Column(Modifier.weight(1f)) {
                           Row(verticalAlignment = Alignment.CenterVertically) {
-                              Text("UFC PULSE PRO", color = Color(0xFFD20A0A), fontSize = 18.sp, fontWeight = FontWeight.Black)
-                              Spacer(Modifier.width(8.dp))
+                              Text("UFC PULSE PRO", color = Color(0xFFD20A0A), fontSize = 17.sp, fontWeight = FontWeight.Black)
+                              Spacer(Modifier.width(6.dp))
                               Text(if (isFold8) "FOLD 8 4:3" else "COVER", color = Color(0xFFFFD700), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                           }
-                          Text("Live Tracker • Odds • Predictor • GMT/IST", color = Color.Gray, fontSize = 11.sp)
+                          Text("Live Status • P4P • Full Profiles & Card Odds", color = Color.Gray, fontSize = 11.sp)
                       }
                       Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                          Button(onClick = {
+                              hideBars = !hideBars
+                              try {
+                                  val act = ctx as? Activity ?: return@Button
+                                  val c = WindowInsetsControllerCompat(act.window, act.window.decorView)
+                                  if (hideBars) c.hide(WindowInsetsCompat.Type.statusBars()) else c.show(WindowInsetsCompat.Type.statusBars())
+                              } catch (_: Throwable) {}
+                          }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630)), contentPadding = PaddingValues(8.dp, 4.dp)) {
+                              Text(if (hideBars) "Bars: Hidden" else "Bars: Shown", fontSize = 10.sp, color = Color.White)
+                          }
                           if (isFold8) {
                               Button(onClick = { threePane = !threePane }, colors = ButtonDefaults.buttonColors(containerColor = if (threePane) Color(0xFFFFD700) else Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
-                                  Text(if (threePane) "3-Pane: ON" else "3-Pane", fontSize = 11.sp, color = if (threePane) Color.Black else Color.White, fontWeight = FontWeight.Bold)
+                                  Text(if (threePane) "3-Pane: ON" else "3-Pane", fontSize = 10.sp, color = if (threePane) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                               }
-                          }
-                          Button(onClick = { Notifier.sendRss(ctx, news.firstOrNull()?.title ?: "UFC Fight Night Live Update", "UFC RSS", "https://www.ufc.com") }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
-                              Text("Test Alert", fontSize = 11.sp, color = Color.White)
                           }
                           Button(onClick = { sync() }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD20A0A)), contentPadding = PaddingValues(10.dp, 4.dp)) {
                               Text("Sync", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
                           }
                       }
                   }
+                  if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFFD20A0A))
                   if (!(isFold8 && threePane)) {
                       TabRow(selectedTabIndex = tab, containerColor = Color(0xFF121216), contentColor = Color(0xFFD20A0A)) {
-                          Tab(tab == 0, { tab = 0 }, text = { Text("Live Tracker", fontSize = 12.sp) })
-                          Tab(tab == 1, { tab = 1 }, text = { Text("RSS (${news.size})", fontSize = 12.sp) })
-                          Tab(tab == 2, { tab = 2 }, text = { Text("Events", fontSize = 12.sp) })
-                          Tab(tab == 3, { tab = 3 }, text = { Text("Roster", fontSize = 12.sp) })
+                          Tab(tab == 0, { tab = 0 }, text = { Text("Live & Results", fontSize = 11.sp) })
+                          Tab(tab == 1, { tab = 1 }, text = { Text("Events & Odds", fontSize = 11.sp) })
+                          Tab(tab == 2, { tab = 2 }, text = { Text("Roster & P4P", fontSize = 11.sp) })
+                          Tab(tab == 3, { tab = 3 }, text = { Text("RSS (${news.size})", fontSize = 11.sp) })
                       }
+                  }
+                  val toggleMode = {
+                      showUpcoming = !showUpcoming
+                      live = if (showUpcoming) UfcData.upcomingNov7 else UfcData.completedOct31
+                      Notifier.updateLiveBar(ctx, live, pinBar)
                   }
                   if (isFold8 && threePane) {
                       Row(Modifier.fillMaxSize().padding(12.dp), Arrangement.spacedBy(14.dp)) {
-                          Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                          Box(Modifier.weight(1f)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
-                          Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
+                          Box(Modifier.weight(1f)) { LivePane(live, showUpcoming, toggleMode, { live = simNextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) { selFighter = findFighter(it) } }
+                          Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, evFilter, selEvent, { selEvent = it }) { selFighter = findFighter(it) } }
+                          Box(Modifier.weight(1f)) { RosterPane(UfcData.seedRoster, search, { search = it }, divFilter, { divFilter = it }, 1) { selFighter = it } }
                       }
                   } else {
                       when (tab) {
                           0 -> if (isFold8) {
                               Row(Modifier.fillMaxSize().padding(14.dp), Arrangement.spacedBy(16.dp)) {
-                                  Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                                  Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
+                                  Box(Modifier.weight(1f)) { LivePane(live, showUpcoming, toggleMode, { live = simNextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) { selFighter = findFighter(it) } }
+                                  Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL", selEvent ?: UfcData.seedEvents.getOrNull(1), { selEvent = it }) { selFighter = findFighter(it) } }
                               }
-                          } else Box(Modifier.fillMaxSize().padding(12.dp)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                          1 -> Box(Modifier.fillMaxSize().padding(12.dp)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
-                          2 -> Column(Modifier.fillMaxSize().padding(12.dp)) {
+                          } else Box(Modifier.fillMaxSize().padding(12.dp)) { LivePane(live, showUpcoming, toggleMode, { live = simNextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) { selFighter = findFighter(it) } }
+                          1 -> Column(Modifier.fillMaxSize().padding(12.dp)) {
                               Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-                                  listOf("ALL", "PPV", "FIGHT NIGHT").forEach { f ->
-                                      Button(onClick = { evFilter = f }, colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFD20A0A) else Color(0xFF22222A))) { Text(f, fontSize = 12.sp, color = Color.White) }
+                                  listOf("ALL", "PPV", "FIGHT NIGHT", "COMPLETED").forEach { f ->
+                                      Button(onClick = { evFilter = f; selEvent = null }, colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFD20A0A) else Color(0xFF22222A)), contentPadding = PaddingValues(12.dp, 4.dp)) { Text(f, fontSize = 11.sp, color = Color.White) }
                                   }
                               }
-                              EventsPane(UfcData.seedEvents, evFilter)
+                              EventsPane(UfcData.seedEvents, evFilter, selEvent, { selEvent = it }) { selFighter = findFighter(it) }
                           }
-                          3 -> Box(Modifier.fillMaxSize().padding(12.dp)) { RosterPane(UfcData.seedRoster, search, { search = it }, divFilter, { divFilter = it }, if (isFold8) 2 else 1) }
+                          2 -> Box(Modifier.fillMaxSize().padding(12.dp)) { RosterPane(UfcData.seedRoster, search, { search = it }, divFilter, { divFilter = it }, if (isFold8) 2 else 1) { selFighter = it } }
+                          3 -> Box(Modifier.fillMaxSize().padding(12.dp)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
                       }
                   }
               }
           }
 
           @Composable
-          fun LivePane(m: LiveMatchState, pinned: Boolean, onPin: () -> Unit, onStep: () -> Unit) {
+          fun LivePane(m: LiveMatchState, showingUpcoming: Boolean, onToggle: () -> Unit, onStep: () -> Unit, onFighter: (String) -> Unit) {
               LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxSize()) {
                   item {
-                      Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF181822)), shape = RoundedCornerShape(16.dp)) {
-                          Row(Modifier.fillMaxWidth().padding(14.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                              Column(Modifier.weight(1f)) {
-                                  Text(if (pinned) "● ONE UI NOW BAR / LIVE STATUS PILL ACTIVE" else "○ ONE UI NOW BAR PAUSED", color = if (pinned) Color(0xFF4CAF50) else Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Black)
-                                  Text("${m.fighterA} (${m.oddsA}) vs ${m.fighterB} (${m.oddsB})", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                                  Text("R${m.round} • ${m.prediction}", color = Color(0xFFFFD700), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                              }
-                              Button(onClick = onPin, colors = ButtonDefaults.buttonColors(containerColor = if (pinned) Color(0xFF2B2B38) else Color(0xFFD20A0A))) {
-                                  Text(if (pinned) "Unpin" else "Pin Bar", fontSize = 11.sp, color = Color.White)
-                              }
+                      Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                          Button(onClick = { if (showingUpcoming) onToggle() }, Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (!showingUpcoming) Color(0xFF4CAF50) else Color(0xFF22222A))) {
+                              Text("Last Event (FINAL)", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                          }
+                          Button(onClick = { if (!showingUpcoming) onToggle() }, Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (showingUpcoming) Color(0xFFD20A0A) else Color(0xFF22222A))) {
+                              Text("Next Event Predictor (Nov 7)", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
                           }
                       }
                   }
                   item {
-                      Card(Modifier.fillMaxWidth().border(1.dp, Color(0xFFD20A0A), RoundedCornerShape(12.dp)), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(12.dp)) {
+                      Card(Modifier.fillMaxWidth().border(1.dp, if (m.isEventOver) Color(0xFF4CAF50) else Color(0xFFD20A0A), RoundedCornerShape(12.dp)), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B))) {
                           Column(Modifier.padding(16.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text("● LIVE OCTAGON TRACKER", color = Color(0xFFFF4500), fontSize = 11.sp, fontWeight = FontWeight.Black)
-                                  Text("Round ${m.round} • ${m.time}", color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+                                  Text(if (m.isEventOver) "● EVENT COMPLETED • OFFICIAL FINAL" else "● UPCOMING MAIN EVENT PREDICTOR", color = if (m.isEventOver) Color(0xFF4CAF50) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                  Text("${m.round} • ${m.time}", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                               }
                               Text("${m.eventTitle} • ${m.weightClass}", color = Color.Gray, fontSize = 12.sp)
-                              Spacer(Modifier.height(12.dp))
+                              Spacer(Modifier.height(14.dp))
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                  Column(Modifier.weight(1f)) {
-                                      Text(m.fighterA, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Black)
-                                      Text("Record: ${m.recordA}", color = Color.Gray, fontSize = 12.sp)
-                                      Text("Live Odds: ${m.oddsA}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                  Column(Modifier.weight(1f).clickable { onFighter(m.fighterA) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                                      FighterAvatar(m.fighterA, 64.dp, m.probA == 100)
+                                      Spacer(Modifier.height(6.dp))
+                                      Text(m.fighterA, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+                                      Text("${m.recordA} • ${m.oddsA}", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                   }
-                                  Text("VS", color = Color(0xFFD20A0A), fontSize = 15.sp, fontWeight = FontWeight.Black)
-                                  Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
-                                      Text(m.fighterB, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Black)
-                                      Text("Record: ${m.recordB}", color = Color.Gray, fontSize = 12.sp)
-                                      Text("Live Odds: ${m.oddsB}", color = Color(0xFFFFD700), fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                  Text("VS", color = Color(0xFFD20A0A), fontSize = 16.sp, fontWeight = FontWeight.Black, modifier = Modifier.padding(horizontal = 8.dp))
+                                  Column(Modifier.weight(1f).clickable { onFighter(m.fighterB) }, horizontalAlignment = Alignment.CenterHorizontally) {
+                                      FighterAvatar(m.fighterB, 64.dp)
+                                      Spacer(Modifier.height(6.dp))
+                                      Text(m.fighterB, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+                                      Text("${m.recordB} • ${m.oddsB}", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                   }
-                              }
-                              Spacer(Modifier.height(12.dp))
-                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text("${m.fighterA} (${m.probA}%)", color = Color(0xFFD20A0A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                  Text("${m.fighterB} (${m.probB}%)", color = Color(0xFF2196F3), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                              }
-                              Spacer(Modifier.height(4.dp))
-                              Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
-                                  Box(Modifier.weight(m.probA.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFFD20A0A)))
-                                  Box(Modifier.weight(m.probB.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFF2196F3)))
                               }
                               Spacer(Modifier.height(12.dp))
                               Row(Modifier.fillMaxWidth().background(Color(0xFF1E1E26), RoundedCornerShape(8.dp)).padding(10.dp), Arrangement.SpaceBetween) {
-                                  Text("Strikes: ${m.strikesA}", color = Color.White, fontSize = 12.sp)
-                                  Text("TD: ${m.tdA} - ${m.tdB}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                  Text("Strikes: ${m.strikesB}", color = Color.White, fontSize = 12.sp)
+                                  Text("Sig. Strikes: ${m.strikesA}", color = Color.White, fontSize = 12.sp)
+                                  Text("Takedowns: ${m.tdA} - ${m.tdB}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                  Text("Sig. Strikes: ${m.strikesB}", color = Color.White, fontSize = 12.sp)
                               }
                               Spacer(Modifier.height(12.dp))
-                              Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF20202A)), shape = RoundedCornerShape(8.dp)) {
+                              Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF20202A))) {
                                   Column(Modifier.padding(12.dp)) {
-                                      Text("LIVE RESULT PREDICTION AS FIGHT PLAYS OUT", color = Color(0xFF4CAF50), fontSize = 10.sp, fontWeight = FontWeight.Black)
-                                      Text(m.prediction, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                      Text(if (m.isEventOver) "OFFICIAL RESULT SUMMARY" else "LIVE / PRE-FIGHT AI PREDICTION", color = Color(0xFF4CAF50), fontSize = 10.sp, fontWeight = FontWeight.Black)
+                                      Text(m.prediction, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                       Text(m.status, color = Color(0xFFC0C0C8), fontSize = 12.sp)
                                   }
                               }
                               Spacer(Modifier.height(12.dp))
-                              Button(onClick = onStep, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD20A0A))) {
-                                  Text("Simulate Next Live Round & Update Now Bar ➔", color = Color.White, fontWeight = FontWeight.Bold)
+                              Button(onClick = if (m.isEventOver) onToggle else onStep, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = if (m.isEventOver) Color(0xFF2B2B38) else Color(0xFFD20A0A))) {
+                                  Text(if (m.isEventOver) "Event Finished (Locked) • Switch to Nov 7 Preview ➔" else "Simulate Next Round (Nov 7 Main Event) ➔", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                               }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          fun EventsPane(list: List<UfcEvent>, filter: String, sel: UfcEvent?, onSel: (UfcEvent?) -> Unit, onFighter: (String) -> Unit) {
+              if (sel != null) {
+                  val days = try { ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(sel.isoDate)) } catch (_: Throwable) { 6L }
+                  val badge = if (sel.isCompleted) "OFFICIAL FINAL RESULTS" else if (days <= 7L) "FIGHT WEEK ODDS • $days DAYS OUT" else "EARLY LINE ODDS • $days DAYS OUT"
+                  Column(Modifier.fillMaxSize()) {
+                      Button(onClick = { onSel(null) }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630)), modifier = Modifier.padding(bottom = 8.dp)) {
+                          Text("← Back to All Events", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                      }
+                      Card(Modifier.fillMaxSize(), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B))) {
+                          Column(Modifier.fillMaxSize().padding(14.dp)) {
+                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                  Text(sel.type, color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                  Text(badge, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                              }
+                              Text(sel.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                              Text("${sel.localTime} • ${sel.venue}", color = Color.Gray, fontSize = 12.sp)
+                              Spacer(Modifier.height(10.dp))
+                              LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
+                                  items(sel.bouts) { b ->
+                                      Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF202028))) {
+                                          Column(Modifier.padding(12.dp)) {
+                                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                                  Text("${b.placement} • ${b.weightClass}", color = Color(0xFFD20A0A), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                                  Text(b.liveOdds, color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                              }
+                                              Spacer(Modifier.height(8.dp))
+                                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                                  Row(Modifier.weight(1f).clickable { onFighter(b.fighterA) }, verticalAlignment = Alignment.CenterVertically) {
+                                                      FighterAvatar(b.fighterA, 42.dp)
+                                                      Spacer(Modifier.width(8.dp))
+                                                      Column { Text(b.fighterA, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold); Text(b.recordA, color = Color.Gray, fontSize = 11.sp) }
+                                                  }
+                                                  Text("VS", color = Color(0xFFD20A0A), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                                                  Row(Modifier.weight(1f).clickable { onFighter(b.fighterB) }, Arrangement.End, Alignment.CenterVertically) {
+                                                      Column(horizontalAlignment = Alignment.End) { Text(b.fighterB, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End); Text(b.recordB, color = Color.Gray, fontSize = 11.sp) }
+                                                      Spacer(Modifier.width(8.dp))
+                                                      FighterAvatar(b.fighterB, 42.dp)
+                                                  }
+                                              }
+                                              Spacer(Modifier.height(6.dp))
+                                              if (b.isCompleted) Text(b.officialResult, color = Color(0xFF4CAF50), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                              else Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                                  Text(b.openingOdds, color = Color.Gray, fontSize = 11.sp)
+                                                  Text(b.prediction, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              } else {
+                  LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
+                      items(list.filter { filter == "ALL" || it.type == filter }) { ev ->
+                          Card(Modifier.fillMaxWidth().clickable { onSel(ev) }, colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B))) {
+                              Column(Modifier.padding(14.dp)) {
+                                  Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                                      Text(ev.type, color = if (ev.isCompleted) Color(0xFF4CAF50) else Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                      Text(ev.localTime, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                  }
+                                  Text(ev.title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                                  Text(ev.venue, color = Color.Gray, fontSize = 12.sp)
+                                  Spacer(Modifier.height(8.dp))
+                                  ev.bouts.firstOrNull()?.let { mb ->
+                                      Row(verticalAlignment = Alignment.CenterVertically) {
+                                          FighterAvatar(mb.fighterA, 34.dp); Spacer(Modifier.width(6.dp)); FighterAvatar(mb.fighterB, 34.dp); Spacer(Modifier.width(8.dp))
+                                          Text("${ev.bouts.size} Bouts • Tap for Full Card & Live Odds ➔", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          fun RosterPane(list: List<Fighter>, q: String, onQ: (String) -> Unit, div: String, onDiv: (String) -> Unit, cols: Int, onSel: (Fighter) -> Unit) {
+              val divs = listOf("MEN'S P4P", "WOMEN'S P4P", "ALL", "CHAMPS", "HW", "LHW", "MW", "WW", "LW", "FW", "BW", "FLW", "WMMA")
+              Column(Modifier.fillMaxSize()) {
+                  OutlinedTextField(q, onQ, label = { Text("Search fighter, nationality, or division (tap for full profile)") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), singleLine = true)
+                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), Arrangement.spacedBy(6.dp)) {
+                      divs.forEach { d ->
+                          Button(onClick = { onDiv(d) }, colors = ButtonDefaults.buttonColors(containerColor = if (div == d) Color(0xFFD20A0A) else Color(0xFF22222A)), contentPadding = PaddingValues(10.dp, 2.dp)) {
+                              Text(d, fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                          }
+                      }
+                  }
+                  val filtered = list.filter {
+                      (it.name.contains(q, true) || it.division.contains(q, true) || it.nationality.contains(q, true)) &&
+                          when (div) { "MEN'S P4P" -> it.mensP4p > 0; "WOMEN'S P4P" -> it.womensP4p > 0; "ALL" -> true; "CHAMPS" -> it.isChamp; else -> it.code == div }
+                  }.sortedWith(when (div) { "MEN'S P4P" -> compareBy { it.mensP4p }; "WOMEN'S P4P" -> compareBy { it.womensP4p }; else -> compareBy { it.name } })
+
+                  LazyVerticalGrid(GridCells.Fixed(cols), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
+                      items(filtered) { f ->
+                          val rnk = if (div == "WOMEN'S P4P" || (f.womensP4p > 0 && f.mensP4p == 0)) f.womensP4p else f.mensP4p
+                          Card(Modifier.fillMaxWidth().clickable { onSel(f) }, colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B))) {
+                              Row(Modifier.fillMaxWidth().padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                  Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                                      FighterAvatar(f.name, 50.dp, f.isChamp)
+                                      Spacer(Modifier.width(10.dp))
+                                      Column {
+                                          Row(verticalAlignment = Alignment.CenterVertically) {
+                                              if (rnk > 0) Text("#$rnk P4P ", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                              Text(f.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                          }
+                                          Text("${f.nationality} • ${f.division}", color = Color.Gray, fontSize = 11.sp)
+                                          Text("Tap for Full Profile & Past Opponents", color = Color(0xFFD20A0A), fontSize = 10.sp, fontWeight = FontWeight.SemiBold)
+                                      }
+                                  }
+                                  Column(horizontalAlignment = Alignment.End) {
+                                      if (f.isChamp) Text("CHAMP", color = Color(0xFFFFD700), fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                      Text(f.record, color = Color(0xFF4CAF50), fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                                      Text("Odds: ${f.odds}", color = Color.Gray, fontSize = 10.sp)
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+
+          @Composable
+          fun FighterProfileDialog(f: Fighter, onDismiss: () -> Unit) {
+              val ctx = LocalContext.current
+              Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                  Card(Modifier.fillMaxWidth(0.94f).fillMaxHeight(0.88f).border(1.dp, Color(0xFFD20A0A), RoundedCornerShape(16.dp)), colors = CardDefaults.cardColors(containerColor = Color(0xFF121217))) {
+                      Column(Modifier.fillMaxSize().padding(16.dp)) {
+                          Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                              Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                  FighterAvatar(f.name, 70.dp, f.isChamp)
+                                  Spacer(Modifier.width(12.dp))
+                                  Column {
+                                      Text(f.name, color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Black)
+                                      Text("\"${f.nickname}\" • ${f.division}", color = Color(0xFFFFD700), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                      Text("Nationality: ${f.nationality}", color = Color.LightGray, fontSize = 12.sp)
+                                  }
+                              }
+                              Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630))) { Text("Close", color = Color.White, fontSize = 12.sp) }
+                          }
+                          Spacer(Modifier.height(12.dp))
+                          Row(Modifier.fillMaxWidth().background(Color(0xFF1C1C24), RoundedCornerShape(10.dp)).padding(12.dp), Arrangement.SpaceBetween) {
+                              Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("RECORD", color = Color.Gray, fontSize = 10.sp); Text(f.record, color = Color(0xFF4CAF50), fontSize = 15.sp, fontWeight = FontWeight.Black) }
+                              Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("KO / SUB / DEC", color = Color.Gray, fontSize = 10.sp); Text("${f.koWins} / ${f.subWins} / ${f.decWins}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                              Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("HT / REACH", color = Color.Gray, fontSize = 10.sp); Text("${f.height} / ${f.reach}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                              Column(horizontalAlignment = Alignment.CenterHorizontally) { Text("STANCE", color = Color.Gray, fontSize = 10.sp); Text(f.stance, color = Color(0xFFFFD700), fontSize = 14.sp, fontWeight = FontWeight.Bold) }
+                          }
+                          Spacer(Modifier.height(14.dp))
+                          Text("PREVIOUS OPPONENTS & FIGHT RECORD HISTORY", color = Color(0xFFD20A0A), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                          Spacer(Modifier.height(8.dp))
+                          LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
+                              items(f.history) { h ->
+                                  Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF1B1B22))) {
+                                      Row(Modifier.fillMaxWidth().padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                                          Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                              Box(Modifier.background(if (h.result == "WIN") Color(0xFF1B5E20) else if (h.result == "LOSS") Color(0xFFB71C1C) else Color(0xFF424242), RoundedCornerShape(4.dp)).padding(horizontal = 8.dp, vertical = 4.dp)) {
+                                                  Text(h.result, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Black)
+                                              }
+                                              Spacer(Modifier.width(10.dp))
+                                              Column {
+                                                  Text("vs. ${h.opponent}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                                  Text("${h.method} • ${h.event}", color = Color.Gray, fontSize = 11.sp)
+                                              }
+                                          }
+                                          FighterAvatar(h.opponent, 36.dp)
+                                      }
+                                  }
+                              }
+                          }
+                          Spacer(Modifier.height(10.dp))
+                          Button(onClick = { openUrlSafely(ctx, "https://www.ufc.com/athlete/${f.name.lowercase().replace("'", "").replace(" ", "-")}") }, Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD20A0A))) {
+                              Text("Open Official UFC.com Athlete Profile ➔", color = Color.White, fontWeight = FontWeight.Bold)
                           }
                       }
                   }
@@ -551,7 +756,7 @@ jobs:
           fun NewsPane(list: List<NewsItem>, onClick: (NewsItem) -> Unit) {
               LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
                   items(list) { item ->
-                      Card(Modifier.fillMaxWidth().clickable { onClick(item) }, colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(10.dp)) {
+                      Card(Modifier.fillMaxWidth().clickable { onClick(item) }, colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B))) {
                           Column(Modifier.padding(14.dp)) {
                               Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
                                   Text(item.source, color = Color(0xFFD20A0A), fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -560,73 +765,6 @@ jobs:
                               Spacer(Modifier.height(4.dp))
                               Text(item.title, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                               if (item.summary.isNotBlank()) Text(item.summary, color = Color(0xFFB0B0B8), fontSize = 13.sp, maxLines = 2)
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun EventsPane(list: List<UfcEvent>, filter: String) {
-              val filtered = list.filter { filter == "ALL" || it.type == filter }
-              LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxSize()) {
-                  items(filtered) { ev ->
-                      Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(10.dp)) {
-                          Column(Modifier.padding(14.dp)) {
-                              Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                                  Text(ev.type, color = if (ev.type == "PPV") Color(0xFFFFD700) else Color(0xFFD20A0A), fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
-                                  Text(ev.localTime, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                              }
-                              Text(ev.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                              Text(ev.venue, color = Color.Gray, fontSize = 12.sp)
-                              Spacer(Modifier.height(8.dp))
-                              ev.bouts.forEach { b ->
-                                  Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-                                      Text("• ${b.boutName}", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                      Row(Modifier.fillMaxWidth().padding(start = 10.dp), Arrangement.SpaceBetween) {
-                                          Text("Odds: ${b.odds}", color = Color(0xFFFFD700), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                          Text(b.prediction, color = Color(0xFF4CAF50), fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun RosterPane(list: List<Fighter>, q: String, onQ: (String) -> Unit, div: String, onDiv: (String) -> Unit, cols: Int) {
-              val divs = listOf("ALL", "CHAMPS", "HW", "LHW", "MW", "WW", "LW", "FW", "BW", "FLW", "WMMA")
-              Column(Modifier.fillMaxSize()) {
-                  OutlinedTextField(q, onQ, label = { Text("Search fighter or division") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), singleLine = true)
-                  Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), Arrangement.spacedBy(6.dp)) {
-                      divs.forEach { d ->
-                          Button(onClick = { onDiv(d) }, colors = ButtonDefaults.buttonColors(containerColor = if (div == d) Color(0xFFD20A0A) else Color(0xFF22222A)), contentPadding = PaddingValues(10.dp, 2.dp)) {
-                              Text(d, fontSize = 11.sp, color = Color.White)
-                          }
-                      }
-                  }
-                  val filtered = list.filter { (it.name.contains(q, true) || it.division.contains(q, true)) && (div == "ALL" || (div == "CHAMPS" && it.isChamp) || it.code == div) }
-                  LazyVerticalGrid(GridCells.Fixed(cols), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxSize()) {
-                      items(filtered) { f ->
-                          Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF16161B)), shape = RoundedCornerShape(8.dp)) {
-                              Row(Modifier.fillMaxWidth().padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                                  Column(Modifier.weight(1f)) {
-                                      Row(verticalAlignment = Alignment.CenterVertically) {
-                                          Text(f.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                          if (f.isChamp) {
-                                              Spacer(Modifier.width(6.dp))
-                                              Text("CHAMP", color = Color(0xFFFFD700), fontSize = 9.sp, fontWeight = FontWeight.Black)
-                                          }
-                                      }
-                                      Text("${f.division} • Odds: ${f.odds}", color = Color.Gray, fontSize = 11.sp)
-                                  }
-                                  Column(horizontalAlignment = Alignment.End) {
-                                      Text(f.record, color = Color(0xFF4CAF50), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold)
-                                      Text("W - L - D", color = Color.Gray, fontSize = 9.sp)
-                                  }
-                              }
                           }
                       }
                   }
@@ -642,3 +780,4 @@ jobs:
         with:
           name: UFC-Pulse-Pro-APK
           path: app/build/outputs/apk/debug/app-debug.apk
+          # === END OF WORKFLOW ===
