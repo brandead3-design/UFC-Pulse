@@ -1,691 +1,273 @@
-name: Build MMA Pulse APK (Enhanced)
-
+name: Build MMA Pulse APK
 on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Setup Gradle 8.9
-        uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Generate MMA Pulse Android Project
+      - name: Generate Project
         run: |
           rm -rf app settings.gradle.kts gradle.properties
           mkdir -p app/src/main/java/com/mma/pulse app/src/main/res/drawable
-
           cat << 'EOF' > settings.gradle.kts
           pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories { google(); mavenCentral() }
-          }
+          dependencyResolutionManagement { repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS); repositories { google(); mavenCentral() } }
           rootProject.name = "MMAPulse"
           include(":app")
           EOF
-
           cat << 'EOF' > gradle.properties
           org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
           android.useAndroidX=true
           android.nonTransitiveRClass=true
           kotlin.code.style=official
           EOF
-
           cat << 'EOF' > app/build.gradle.kts
-          plugins {
-              id("com.android.application") version "8.5.2"
-              id("org.jetbrains.kotlin.android") version "1.9.24"
-          }
-          android {
-              namespace = "com.mma.pulse"
-              compileSdk = 35
-              defaultConfig {
-                  applicationId = "com.mma.pulse.pro"
-                  minSdk = 26
-                  targetSdk = 35
-                  versionCode = 43
-                  versionName = "21.3-BranDEAD-Pro"
-              }
-              buildFeatures { compose = true }
-              composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
-              compileOptions {
-                  sourceCompatibility = JavaVersion.VERSION_17
-                  targetCompatibility = JavaVersion.VERSION_17
-              }
-              kotlinOptions { jvmTarget = "17" }
-          }
+          plugins { id("com.android.application") version "8.5.2"; id("org.jetbrains.kotlin.android") version "1.9.24" }
+          android { namespace = "com.mma.pulse"; compileSdk = 35
+            defaultConfig { applicationId = "com.mma.pulse.pro"; minSdk = 26; targetSdk = 35; versionCode = 43; versionName = "21.3" }
+            buildFeatures { compose = true }; composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
+            compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+            kotlinOptions { jvmTarget = "17" } }
           dependencies {
-              implementation("androidx.core:core-ktx:1.15.0")
-              implementation("androidx.activity:activity-compose:1.10.0")
-              implementation("androidx.compose.animation:animation-core:1.7.6")
-              implementation("androidx.compose.ui:ui:1.7.6")
-              implementation("androidx.compose.foundation:foundation:1.7.6")
-              implementation("androidx.compose.material3:material3:1.3.1")
-              implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-              implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-          }
+            implementation("androidx.core:core-ktx:1.15.0"); implementation("androidx.activity:activity-compose:1.10.0")
+            implementation("androidx.compose.ui:ui:1.7.6"); implementation("androidx.compose.material3:material3:1.3.1")
+            implementation("androidx.compose.foundation:foundation:1.7.6"); implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0") }
           EOF
-
           cat << 'EOF' > app/src/main/res/drawable/ic_mma_pulse.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp" android:height="108dp"
-              android:viewportWidth="108" android:viewportHeight="108">
-              <path android:fillColor="#080810" android:pathData="M0,0h108v108h-108z"/>
-              <path android:fillColor="#181224" android:strokeColor="#FF1744" android:strokeWidth="3.5"
-                  android:pathData="M36,12 L72,12 L96,36 L96,72 L72,96 L36,96 L12,72 L12,36 Z"/>
-              <path android:strokeColor="#FF1744" android:strokeWidth="5.5"
-                  android:strokeLineCap="round" android:strokeLineJoin="round"
-                  android:pathData="M20,54 L35,54 L43,30 L54,78 L65,24 L74,64 L81,54 L88,54"/>
-              <path android:fillColor="#FFD700"
-                  android:pathData="M65,19 C67.8,19 70,21.2 70,24 C70,26.8 67.8,29 65,29 C62.2,29 60,26.8 60,24 C60,21.2 62.2,19 65,19 Z"/>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+          <path android:fillColor="#080810" android:pathData="M0,0h108v108h-108z"/>
+          <path android:fillColor="#181224" android:strokeColor="#FF1744" android:strokeWidth="3.5" android:pathData="M36,12 L72,12 L96,36 L96,72 L72,96 L36,96 L12,72 L12,36 Z"/>
           </vector>
           EOF
-
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.INTERNET" />
-              <application
-                  android:allowBackup="false"
-                  android:icon="@drawable/ic_mma_pulse"
-                  android:roundIcon="@drawable/ic_mma_pulse"
-                  android:label="MMA Pulse"
-                  android:supportsRtl="true"
-                  android:usesCleartextTraffic="true"
-                  android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true"
-                      android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|density|uiMode|keyboardHidden">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
+          <uses-permission android:name="android.permission.INTERNET"/>
+          <application android:icon="@drawable/ic_mma_pulse" android:label="MMA Pulse" android:theme="@android:style/Theme.DeviceDefault.NoActionBar" android:usesCleartextTraffic="true">
+          <activity android:name=".MainActivity" android:exported="true"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity>
+          </application></manifest>
           EOF
-
           cat << 'EOF' > app/src/main/java/com/mma/pulse/MainActivity.kt
           package com.mma.pulse
-
-          import android.graphics.Bitmap
-          import android.graphics.BitmapFactory
           import android.os.Bundle
-          import android.util.LruCache
           import androidx.activity.ComponentActivity
           import androidx.activity.compose.setContent
-          import androidx.compose.animation.core.*
-          import androidx.compose.foundation.*
+          import androidx.compose.foundation.background
           import androidx.compose.foundation.layout.*
           import androidx.compose.foundation.lazy.*
-          import androidx.compose.foundation.shape.CircleShape
           import androidx.compose.foundation.shape.RoundedCornerShape
           import androidx.compose.material3.*
           import androidx.compose.runtime.*
-          import androidx.compose.ui.Alignment
           import androidx.compose.ui.Modifier
-          import androidx.compose.ui.draw.clip
-          import androidx.compose.ui.geometry.Offset
-          import androidx.compose.ui.graphics.*
-          import androidx.compose.ui.graphics.drawscope.Stroke
-          import androidx.compose.ui.layout.ContentScale
-          import androidx.compose.ui.platform.LocalContext
+          import androidx.compose.ui.graphics.Color
           import androidx.compose.ui.text.font.FontWeight
-          import androidx.compose.ui.text.style.TextAlign
-          import androidx.compose.ui.text.style.TextOverflow
           import androidx.compose.ui.unit.dp
           import androidx.compose.ui.unit.sp
           import kotlinx.coroutines.*
+          import org.json.JSONArray
           import org.json.JSONObject
-          import java.net.HttpURLConnection
           import java.net.URL
-          import java.net.URLEncoder
-          import java.text.SimpleDateFormat
-          import java.util.*
-          import kotlin.math.*
-
-          // ============================================================
-          // DATA MODELS
-          // ============================================================
-          data class BoutDetail(
-              val fighterA: String,
-              val fighterB: String,
-              val oddsA: String,
-              val oddsB: String,
-              val result: String? = null,
-              val method: String? = null,
-              val round: Int? = null,
-              val time: String? = null
-          )
-
-          data class MmaEvent(
-              val id: String,
-              val name: String,
-              val date: String,
-              val venue: String,
-              val status: String,
-              val promotion: String = "UFC",
-              val bouts: List<BoutDetail> = emptyList(),
-              val completed: Boolean = false
-          )
-
-          data class Fighter(
-              val id: String,
-              val name: String,
-              val nickname: String,
-              val record: String,
-              val weightClass: String,
-              val imageUrl: String,
-              val age: Int = 0,
-              val height: String = "",
-              val reach: String = "",
-              val stance: String = "",
-              val bio: String = "",
-              val fightHistory: List<PastFight> = emptyList()
-          )
-
-          data class PastFight(
-              val opponent: String,
-              val result: String,
-              val method: String,
-              val date: String,
-              val event: String
-          )
-
-          data class NewsItem(
-              val title: String,
-              val summary: String,
-              val source: String,
-              val url: String,
-              val imageUrl: String
-          )
-
-          data class LiveMatchState(
-              val eventName: String,
-              val fighterA: String,
-              val fighterB: String,
-              val round: Int,
-              val timeRemaining: String,
-              val status: String
-          )
-
-          // ============================================================
-          // ODDS API
-          // ============================================================
-          private const val ODDS_API_KEY = "2092f68cd7ae933cb12006094338703b"
-          private const val ODDS_API_BASE = "https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds"
-
-          // ============================================================
-          // REPOSITORY (continues in next parts)
-          // ============================================================
-          object MmaRepository {
-              private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-              var events by mutableStateOf<List<MmaEvent>>(emptyList())
-              var fighters by mutableStateOf<List<Fighter>>(emptyList())
-              var news by mutableStateOf<List<NewsItem>>(emptyList())
-              var liveMatch by mutableStateOf<LiveMatchState?>(null)
-              var isLoading by mutableStateOf(false)
-              var oddsMap by mutableStateOf<Map<String, Pair<String, String>>>(emptyMap())
-
-              fun syncAll() {
-                  scope.launch {
-                      isLoading = true
-                      try {
-                          fetchOdds()
-                          fetchEvents()
-                          fetchNews()
-                          buildRoster()
-                      } catch (e: Exception) {
-                          e.printStackTrace()
-                      } finally {
-                          isLoading = false
-                      }
-                  }
-              }
-
-              private suspend fun fetchOdds() = withContext(Dispatchers.IO) {
-                  if (ODDS_API_KEY.isBlank()) return@withContext
-                  try {
-                      val url = "$ODDS_API_BASE?regions=eu,uk,us&markets=h2h&oddsFormat=american&apiKey=$ODDS_API_KEY"
-                      val json = URL(url).readText()
-                      val arr = org.json.JSONArray(json)
-                      val map = mutableMapOf<String, Pair<String, String>>()
-                      for (i in 0 until arr.length()) {
-                          val ev = arr.getJSONObject(i)
-                          val home = ev.optString("home_team")
-                          val away = ev.optString("away_team")
-                          var bestA = ""
-                          var bestB = ""
-                          val books = ev.optJSONArray("bookmakers") ?: continue
-                          for (j in 0 until books.length()) {
-                              val bm = books.getJSONObject(j)
-                              val markets = bm.optJSONArray("markets") ?: continue
-                              for (k in 0 until markets.length()) {
-                                  val m = markets.getJSONObject(k)
-                                  if (m.optString("key") == "h2h") {
-                                      val outcomes = m.optJSONArray("outcomes") ?: continue
-                                      for (o in 0 until outcomes.length()) {
-                                          val oc = outcomes.getJSONObject(o)
-                                          val name = oc.optString("name")
-                                          val price = oc.optInt("price")
-                                          val american = if (price > 0) "+$price" else price.toString()
-                                          if (name.equals(home, true)) bestA = american
-                                          if (name.equals(away, true)) bestB = american
-                                      }
-                                  }
-                              }
+          data class Bout(val a:String,val b:String,val oa:String="",val ob:String="")
+          data class Event(val name:String,val date:String,val bouts:List<Bout>,val done:Boolean,val promo:String="UFC")
+          data class News(val title:String,val summary:String)
+          object Repo {
+            var events by mutableStateOf(listOf<Event>())
+            var news by mutableStateOf(listOf<News>())
+            var odds by mutableStateOf(mapOf<String,Pair<String,String>>())
+            fun sync() = CoroutineScope(Dispatchers.IO).launch {
+              try { fetchOdds(); fetchEvents(); fetchNews() } catch(_:Exception){}
+            }
+            private suspend fun fetchOdds() = withContext(Dispatchers.IO) {
+              val key = "2092f68cd7ae933cb12006094338703b"
+              val arr = JSONArray(URL("https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds?regions=eu,uk,us&markets=h2h&oddsFormat=american&apiKey=$key").readText())
+              val m = mutableMapOf<String,Pair<String,String>>()
+              for(i in 0 until arr.length()) {
+                val e = arr.getJSONObject(i)
+                val home = e.optString("home_team"); val away = e.optString("away_team")
+                var oa=""; var ob=""
+                e.optJSONArray("bookmakers")?.let { bms ->
+                  for(j in 0 until bms.length()) {
+                    bms.getJSONObject(j).optJSONArray("markets")?.let { mkts ->
+                      for(k in 0 until mkts.length()) {
+                        if(mkts.getJSONObject(k).optString("key")=="h2h") {
+                          mkts.getJSONObject(k).optJSONArray("outcomes")?.let { outs ->
+                            for(o in 0 until outs.length()) {
+                              val oc = outs.getJSONObject(o)
+                              val price = oc.optInt("price")
+                              val am = if(price>0) "+$price" else price.toString()
+                              if(oc.optString("name").equals(home,true)) oa=am
+                              if(oc.optString("name").equals(away,true)) ob=am
+                            }
                           }
-                          if (bestA.isNotEmpty() && bestB.isNotEmpty()) {
-                              map["${home.lowercase()} vs ${away.lowercase()}"] = Pair(bestA, bestB)
-                              map["${away.lowercase()} vs ${home.lowercase()}"] = Pair(bestB, bestA)
-                          }
+                        }
                       }
-                      oddsMap = map
-                  } catch (e: Exception) {
-                      e.printStackTrace()
+                    }
                   }
-              }private suspend fun fetchEvents() = withContext(Dispatchers.IO) {
-                  try {
-                      val promotions = listOf(
-                          "ufc" to "UFC",
-                          "pfl" to "PFL",
-                          "bellator" to "Bellator"
-                      )
-                      val all = mutableListOf<MmaEvent>()
-                      for ((key, promo) in promotions) {
-                          try {
-                              val url = "https://site.api.espn.com/apis/site/v2/sports/mma/$key/scoreboard"
-                              val json = JSONObject(URL(url).readText())
-                              val arr = json.optJSONArray("events") ?: continue
-                              for (i in 0 until arr.length()) {
-                                  val e = arr.getJSONObject(i)
-                                  val id = e.optString("id")
-                                  val name = e.optString("name")
-                                  val date = e.optString("date")
-                                  val statusObj = e.optJSONObject("status")?.optJSONObject("type")
-                                  val status = statusObj?.optString("state") ?: "pre"
-                                  val completed = status == "post"
-                                  val venue = e.optJSONArray("competitions")?.optJSONObject(0)
-                                      ?.optJSONObject("venue")?.optString("fullName") ?: ""
-
-                                  val bouts = mutableListOf<BoutDetail>()
-                                  val comps = e.optJSONArray("competitions") ?: continue
-                                  for (j in 0 until comps.length()) {
-                                      val c = comps.getJSONObject(j)
-                                      val competitors = c.optJSONArray("competitors") ?: continue
-                                      if (competitors.length() < 2) continue
-                                      val a = competitors.getJSONObject(0)
-                                      val b = competitors.getJSONObject(1)
-                                      val nameA = a.optJSONObject("athlete")?.optString("displayName") ?: ""
-                                      val nameB = b.optJSONObject("athlete")?.optString("displayName") ?: ""
-                                      val keyMatch = "${nameA.lowercase()} vs ${nameB.lowercase()}"
-                                      val odds = oddsMap[keyMatch] ?: Pair("", "")
-                                      val winner = when {
-                                          a.optBoolean("winner") -> nameA
-                                          b.optBoolean("winner") -> nameB
-                                          else -> null
-                                      }
-                                      bouts.add(BoutDetail(nameA, nameB, odds.first, odds.second, winner))
-                                  }
-                                  all.add(MmaEvent(id, name, date, venue, status, promo, bouts, completed))
-                              }
-                          } catch (_: Exception) {}
-                      }
-                      events = all.sortedByDescending { it.date }
-                  } catch (e: Exception) {
-                      e.printStackTrace()
-                  }
+                }
+                if(oa.isNotEmpty()) {
+                  m["${home.lowercase()} vs ${away.lowercase()}"] = Pair(oa,ob)
+                  m["${away.lowercase()} vs ${home.lowercase()}"] = Pair(ob,oa)
+                }
               }
-
-              private suspend fun fetchNews() = withContext(Dispatchers.IO) {
-                  try {
-                      val url = "https://site.api.espn.com/apis/site/v2/sports/mma/news"
-                      val json = JSONObject(URL(url).readText())
-                      val list = mutableListOf<NewsItem>()
-                      val arr = json.optJSONArray("articles") ?: return@withContext
-                      for (i in 0 until minOf(arr.length(), 25)) {
-                          val a = arr.getJSONObject(i)
-                          val images = a.optJSONArray("images")
-                          val img = images?.optJSONObject(0)?.optString("url") ?: ""
-                          list.add(NewsItem(
-                              title = a.optString("headline"),
-                              summary = a.optString("description"),
-                              source = "ESPN",
-                              url = a.optJSONObject("links")?.optString("web") ?: "",
-                              imageUrl = img
-                          ))
+              odds = m
+            }
+            private suspend fun fetchEvents() = withContext(Dispatchers.IO) {
+              val promos = listOf("ufc" to "UFC", "pfl" to "PFL", "bellator" to "Bellator")
+              val list = mutableListOf<Event>()
+              for((key,promo) in promos) {
+                try {
+                  val json = JSONObject(URL("https://site.api.espn.com/apis/site/v2/sports/mma/$key/scoreboard").readText())
+                  json.optJSONArray("events")?.let { arr ->
+                    for(i in 0 until arr.length()) {
+                      val e = arr.getJSONObject(i)
+                      val name = e.optString("name"); val date = e.optString("date")
+                      val done = e.optJSONObject("status")?.optJSONObject("type")?.optString("state")=="post"
+                      val bouts = mutableListOf<Bout>()
+                      e.optJSONArray("competitions")?.let { comps ->
+                        for(j in 0 until comps.length()) {
+                          val c = comps.getJSONObject(j).optJSONArray("competitors") ?: continue
+                          if(c.length()<2) continue
+                          val na = c.getJSONObject(0).optJSONObject("athlete")?.optString("displayName")?:""
+                          val nb = c.getJSONObject(1).optJSONObject("athlete")?.optString("displayName")?:""
+                          val k = "${na.lowercase()} vs ${nb.lowercase()}"
+                          val o = odds[k] ?: Pair("","")
+                          bouts.add(Bout(na,nb,o.first,o.second))
+                        }
                       }
-                      news = list
-                  } catch (e: Exception) {
-                      e.printStackTrace()
+                      list.add(Event(name,date,bouts,done,promo))
+                    }
                   }
+                } catch(_:Exception){}
               }
-
-              private fun buildRoster() {
-                  val names = mutableSetOf<String>()
-                  events.forEach { ev ->
-                      ev.bouts.forEach { b ->
-                          if (b.fighterA.isNotBlank()) names.add(b.fighterA)
-                          if (b.fighterB.isNotBlank()) names.add(b.fighterB)
-                      }
-                  }
-                  fighters = names.map { name ->
-                      Fighter(
-                          id = name.hashCode().toString(),
-                          name = name,
-                          nickname = "",
-                          record = "—",
-                          weightClass = "—",
-                          imageUrl = ""
-                      )
-                  }
+              events = list
+            }
+            private suspend fun fetchNews() = withContext(Dispatchers.IO) {
+              val json = JSONObject(URL("https://site.api.espn.com/apis/site/v2/sports/mma/news").readText())
+              val list = mutableListOf<News>()
+              json.optJSONArray("articles")?.let { arr ->
+                for(i in 0 until minOf(15,arr.length())) {
+                  val a = arr.getJSONObject(i)
+                  list.add(News(a.optString("headline"), a.optString("description")))
+                }
               }
+              news = list
+            }
           }
-
-          // ============================================================
-          // PULSE AI ENGINE
-          // ============================================================
-          object PulseAiEngine {
-              fun analyzeBout(a: String, b: String, oddsA: String, oddsB: String): Pair<Int, Int> {
-                  val pA = impliedProbability(oddsA)
-                  val pB = impliedProbability(oddsB)
-                  val baseA = if (pA > 0) (pA * 0.72 + 0.28 * 0.5) else 0.5
-                  val baseB = if (pB > 0) (pB * 0.72 + 0.28 * 0.5) else 0.5
-                  val total = baseA + baseB
-                  val winA = ((baseA / total) * 100).toInt().coerceIn(8, 92)
-                  return Pair(winA, 100 - winA)
-              }
-
-              private fun impliedProbability(odds: String): Double {
-                  if (odds.isBlank()) return 0.0
-                  return try {
-                      val clean = odds.replace("+", "").replace("−", "-").replace("–", "-")
-                      val n = clean.toInt()
-                      if (n > 0) 100.0 / (n + 100)
-                      else (-n).toDouble() / ((-n) + 100)
-                  } catch (_: Exception) { 0.0 }
-              }
+          object AI {
+            fun analyze(oa:String, ob:String): Pair<Int,Int> {
+              fun p(o:String):Double { if(o.isBlank()) return 0.5; val n=o.replace("+","").toIntOrNull()?:0; return if(n>0) 100.0/(n+100) else (-n).toDouble()/((-n)+100) }
+              val pa=p(oa); val pb=p(ob); val t=pa+pb
+              val wa=((pa/t)*100).toInt().coerceIn(10,90); return Pair(wa,100-wa)
+            }
+          }class MainActivity: ComponentActivity() {
+            override fun onCreate(s: Bundle?) { super.onCreate(s); setContent { App() } }
           }
-
-          // ============================================================
-          // FACE IMAGE LOADER
-          // ============================================================
-          object FaceImageLoader {
-              private val cache = object : LruCache<String, ImageBitmap>(400) {}
-              private val urlHints = mutableMapOf<String, String>()
-              private val failed = mutableSetOf<String>()
-
-              fun registerHint(name: String, id: String = "") {
-                  val k = name.trim().lowercase()
-                  if (id.isNotBlank() && id != "0") urlHints[k] = "https://a.espncdn.com/i/headshots/mma/players/full/$id.png"
+          @Composable fun App() {
+            var tab by remember { mutableStateOf(0) }
+            val tabs = listOf("Live","Cards","AI","Markets","News")
+            LaunchedEffect(Unit){ Repo.sync() }
+            Scaffold(containerColor=Color(0xFF080810), bottomBar={
+              NavigationBar(containerColor=Color(0xFF12121A)) {
+                tabs.forEachIndexed { i,t -> NavigationBarItem(selected=tab==i, onClick={tab=i}, icon={}, label={Text(t,fontSize=11.sp)}) }
               }
-
-              private fun conn(u: String) = (URL(u).openConnection() as HttpURLConnection).apply {
-                  instanceFollowRedirects = true; connectTimeout = 7000; readTimeout = 7000
-                  setRequestProperty("User-Agent", "Mozilla/5.0 (Android)")
+            }) { p ->
+              Box(Modifier.padding(p)) {
+                when(tab) {
+                  0 -> Live()
+                  1 -> Cards()
+                  2 -> AILab()
+                  3 -> Markets()
+                  4 -> News()
+                }
               }
-
-              suspend fun load(name: String): ImageBitmap? = withContext(Dispatchers.IO) {
-                  val k = name.trim().lowercase()
-                  cache.get(k)?.let { return@withContext it }
-                  if (k in failed) return@withContext null
-                  var u = urlHints[k] ?: ""
-                  if (u.isBlank()) {
-                      try {
-                          val searchJson = conn("https://site.web.api.espn.com/apis/common/v3/search?query=${URLEncoder.encode(name, "UTF-8")}&limit=1&type=player&sport=mma").inputStream.bufferedReader().use { it.readText() }
-                          val pid = JSONObject(searchJson).optJSONArray("items")?.optJSONObject(0)?.optString("id", "") ?: ""
-                          if (pid.isNotBlank()) u = "https://a.espncdn.com/i/headshots/mma/players/full/$pid.png"
-                      } catch (_: Throwable) {}
-                  }
-                  if (u.isNotBlank()) {
-                      try {
-                          val c = conn(u)
-                          if (c.responseCode in 200..299) {
-                              val raw = BitmapFactory.decodeStream(c.inputStream)
-                              c.disconnect()
-                              if (raw != null) {
-                                  val face = raw.asImageBitmap()
-                                  cache.put(k, face)
-                                  return@withContext face
-                              }
-                          }
-                          c.disconnect()
-                      } catch (_: Throwable) {}
-                  }
-                  failed.add(k)
-                  null
-              }
+            }
           }
-
-          // ============================================================
-          // MAIN ACTIVITY + UI
-          // ============================================================
-          class MainActivity : ComponentActivity() {
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContent { MMAPulseApp() }
-              }
+          @Composable fun Live() {
+            val next = Repo.events.firstOrNull { !it.done }
+            Column(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
+              Text("LIVE / NEXT", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp)
+              Spacer(Modifier.height(12.dp))
+              if(next!=null) {
+                Text(next.name, color=Color.White, fontWeight=FontWeight.Bold)
+                next.bouts.take(1).forEach { Text("${it.a} vs ${it.b}", color=Color(0xFF00E676), fontSize=18.sp) }
+              } else Text("No upcoming events", color=Color.Gray)
+            }
           }
-
-          @Composable
-          fun MMAPulseApp() {
-              var selectedTab by remember { mutableStateOf(0) }
-              val tabs = listOf("Live", "Cards", "AI Lab", "Markets", "Roster", "News")
-
-              LaunchedEffect(Unit) { MmaRepository.syncAll() }
-
-              Scaffold(
-                  containerColor = Color(0xFF080810),
-                  bottomBar = {
-                      NavigationBar(containerColor = Color(0xFF12121A)) {
-                          tabs.forEachIndexed { index, title ->
-                              NavigationBarItem(
-                                  selected = selectedTab == index,
-                                  onClick = { selectedTab = index },
-                                  icon = { },
-                                  label = { Text(title, fontSize = 10.sp) },
-                                  colors = NavigationBarItemDefaults.colors(
-                                      selectedTextColor = Color(0xFFFF1744),
-                                      unselectedTextColor = Color.Gray,
-                                      indicatorColor = Color.Transparent
-                                  )
-                              )
-                          }
-                      }
+          @Composable fun Cards() {
+            LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
+              item { Text("FIGHT CARDS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              items(Repo.events) { e ->
+                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
+                  Column(Modifier.padding(12.dp)) {
+                    Text(e.name, color=Color.White, fontWeight=FontWeight.Bold)
+                    Text("${e.promo} • ${e.date.take(10)}", color=Color.Gray, fontSize=12.sp)
+                    e.bouts.take(4).forEach { b ->
+                      Text("${b.a} vs ${b.b}", color=Color(0xFF00E676), fontSize=13.sp)
+                      if(b.oa.isNotEmpty()) Text("${b.oa} | ${b.ob}", color=Color(0xFFFFD700), fontSize=11.sp)
+                    }
                   }
-              ) { padding ->
-                  Box(Modifier.padding(padding)) {
-                      when (selectedTab) {
-                          0 -> LiveTab()
-                          1 -> CardsTab()
-                          2 -> AiLabTab()
-                          3 -> MarketsTab()
-                          4 -> RosterTab()
-                          5 -> NewsTab()
-                      }
-                  }
+                }
               }
+            }
           }
-
-          @Composable
-          fun LiveTab() {
-              val live = MmaRepository.liveMatch
-              val events = MmaRepository.events
-              Column(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  Text("LIVE / NEXT", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp)
-                  Spacer(Modifier.height(12.dp))
-                  if (live != null) {
-                      Card(colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)), shape = RoundedCornerShape(16.dp)) {
-                          Column(Modifier.padding(16.dp)) {
-                              Text(live.eventName, color = Color.White, fontWeight = FontWeight.Bold)
-                              Text("${live.fighterA} vs ${live.fighterB}", color = Color(0xFF00E676), fontSize = 18.sp)
-                              Text("Round ${live.round} • ${live.timeRemaining}", color = Color.White)
-                          }
-                      }
-                  } else {
-                      Text("No live bout right now", color = Color.Gray)
-                      val next = events.firstOrNull { !it.completed }
-                      if (next != null) {
-                          Spacer(Modifier.height(8.dp))
-                          Text("Next: ${next.name}", color = Color.White)
-                          next.bouts.take(1).forEach {
-                              Text("${it.fighterA} vs ${it.fighterB}", color = Color(0xFF00E676))
-                          }
-                      }
+          @Composable fun AILab() {
+            LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
+              item { Text("PULSE AI", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              items(Repo.events.filter{!it.done}.flatMap{it.bouts}) { b ->
+                val (wa,wb) = AI.analyze(b.oa,b.ob)
+                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
+                  Column(Modifier.padding(12.dp)) {
+                    Text("${b.a} vs ${b.b}", color=Color.White, fontWeight=FontWeight.Bold)
+                    Text("${b.a}: $wa%   |   ${b.b}: $wb%", color=Color(0xFF00E676))
+                    if(b.oa.isNotEmpty()) Text("Odds ${b.oa} / ${b.ob}", color=Color(0xFFFFD700), fontSize=12.sp)
                   }
+                }
               }
-          }@Composable
-          fun CardsTab() {
-              val events = MmaRepository.events
-              LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  item { Text("FIGHT CARDS", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp) }
-                  items(events) { event ->
-                      Card(
-                          Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                          colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)),
-                          shape = RoundedCornerShape(14.dp)
-                      ) {
-                          Column(Modifier.padding(12.dp)) {
-                              Text(event.name, color = Color.White, fontWeight = FontWeight.Bold)
-                              Text("${event.promotion} • ${event.date.take(10)}", color = Color.Gray, fontSize = 12.sp)
-                              if (event.venue.isNotBlank()) Text(event.venue, color = Color.Gray, fontSize = 11.sp)
-                              event.bouts.forEach { b ->
-                                  Text("${b.fighterA} vs ${b.fighterB}", color = Color(0xFF00E676), fontSize = 13.sp)
-                                  if (b.oddsA.isNotEmpty()) {
-                                      Text("${b.oddsA}  |  ${b.oddsB}", color = Color(0xFFFFD700), fontSize = 11.sp)
-                                  }
-                                  if (b.result != null) {
-                                      Text("Winner: ${b.result}", color = Color(0xFF00E676), fontSize = 11.sp)
-                                  }
-                              }
-                          }
-                      }
-                  }
-              }
+            }
           }
-
-          @Composable
-          fun AiLabTab() {
-              val events = MmaRepository.events.filter { !it.completed }
-              LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  item { Text("PULSE AI LAB", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp) }
-                  items(events.flatMap { it.bouts }) { bout ->
-                      val (winA, winB) = PulseAiEngine.analyzeBout(bout.fighterA, bout.fighterB, bout.oddsA, bout.oddsB)
-                      Card(
-                          Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                          colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)),
-                          shape = RoundedCornerShape(14.dp)
-                      ) {
-                          Column(Modifier.padding(12.dp)) {
-                              Text("${bout.fighterA} vs ${bout.fighterB}", color = Color.White, fontWeight = FontWeight.Bold)
-                              Text("${bout.fighterA}: $winA%   |   ${bout.fighterB}: $winB%", color = Color(0xFF00E676))
-                              if (bout.oddsA.isNotEmpty()) {
-                                  Text("Odds: ${bout.oddsA} / ${bout.oddsB}", color = Color(0xFFFFD700), fontSize = 12.sp)
-                              }
-                          }
-                      }
+          @Composable fun Markets() {
+            LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
+              item { Text("MARKETS (EU)", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              items(Repo.events.filter{!it.done}.flatMap{it.bouts}.filter{it.oa.isNotEmpty()}) { b ->
+                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
+                  Column(Modifier.padding(12.dp)) {
+                    Text("${b.a} vs ${b.b}", color=Color.White, fontWeight=FontWeight.Bold)
+                    Text("${b.a}: ${b.oa}", color=Color(0xFFFFD700))
+                    Text("${b.b}: ${b.ob}", color=Color(0xFFFFD700))
                   }
+                }
               }
+            }
           }
-
-          @Composable
-          fun MarketsTab() {
-              val events = MmaRepository.events.filter { !it.completed }
-              LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  item { Text("MARKETS (EU BOOKS)", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp) }
-                  items(events.flatMap { it.bouts }.filter { it.oddsA.isNotEmpty() }) { bout ->
-                      Card(
-                          Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                          colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)),
-                          shape = RoundedCornerShape(14.dp)
-                      ) {
-                          Column(Modifier.padding(12.dp)) {
-                              Text("${bout.fighterA} vs ${bout.fighterB}", color = Color.White, fontWeight = FontWeight.Bold)
-                              Text("${bout.fighterA}: ${bout.oddsA}", color = Color(0xFFFFD700))
-                              Text("${bout.fighterB}: ${bout.oddsB}", color = Color(0xFFFFD700))
-                          }
-                      }
+          @Composable fun News() {
+            LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
+              item { Text("NEWS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              items(Repo.news) { n ->
+                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
+                  Column(Modifier.padding(12.dp)) {
+                    Text(n.title, color=Color.White, fontWeight=FontWeight.Bold)
+                    Text(n.summary, color=Color.Gray, fontSize=13.sp, maxLines=3)
                   }
-                  if (events.flatMap { it.bouts }.none { it.oddsA.isNotEmpty() }) {
-                      item { Text("No odds available right now", color = Color.Gray, modifier = Modifier.padding(top = 12.dp)) }
-                  }
+                }
               }
-          }
-
-          @Composable
-          fun RosterTab() {
-              val fighters = MmaRepository.fighters
-              LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  item { Text("ROSTER", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp) }
-                  items(fighters) { f ->
-                      Card(
-                          Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                          colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)),
-                          shape = RoundedCornerShape(12.dp)
-                      ) {
-                          Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                              Box(
-                                  Modifier.size(40.dp).clip(CircleShape).background(Color(0xFF2A2A38)),
-                                  contentAlignment = Alignment.Center
-                              ) {
-                                  Text(f.name.take(1), color = Color.White, fontWeight = FontWeight.Bold)
-                              }
-                              Spacer(Modifier.width(12.dp))
-                              Column {
-                                  Text(f.name, color = Color.White, fontWeight = FontWeight.Bold)
-                                  Text(f.weightClass, color = Color.Gray, fontSize = 12.sp)
-                              }
-                          }
-                      }
-                  }
-              }
-          }
-
-          @Composable
-          fun NewsTab() {
-              val news = MmaRepository.news
-              LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-                  item { Text("NEWS", color = Color(0xFFFF1744), fontWeight = FontWeight.Bold, fontSize = 20.sp) }
-                  items(news) { item ->
-                      Card(
-                          Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                          colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A28)),
-                          shape = RoundedCornerShape(14.dp)
-                      ) {
-                          Column(Modifier.padding(12.dp)) {
-                              Text(item.title, color = Color.White, fontWeight = FontWeight.Bold)
-                              Text(item.summary, color = Color.Gray, fontSize = 13.sp, maxLines = 3)
-                              Text(item.source, color = Color(0xFFFF1744), fontSize = 11.sp)
-                          }
-                      }
-                  }
-              }
+            }
           }
           EOF
-
-      - name: Compile Debug APK
+      - name: Build APK
         run: gradle assembleDebug --no-daemon
-
-      - name: Upload Compiled APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: MMA-Pulse-APK
-          path: app/build/outputs/apk/debug/app-debug.apk# End of workflow
-# File is complete. Commit this as .github/workflows/build.yml
+          path: app/build/outputs/apk/debug/app-debug.apk
