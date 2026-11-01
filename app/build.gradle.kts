@@ -11,8 +11,8 @@ android {
         applicationId = "com.ufc.pulse"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "4.0-Pro-Live"
+        versionCode = 5
+        versionName = "5.0-Pro-Stable"
     }
 
     buildFeatures {
@@ -36,6 +36,7 @@ android {
 dependencies {
     val composeBom = platform("androidx.compose:compose-bom:2024.06.00")
     implementation(composeBom)
+    implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")
