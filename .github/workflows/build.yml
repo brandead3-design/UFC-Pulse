@@ -34,7 +34,7 @@ jobs:
           cat << 'EOF' > app/build.gradle.kts
           plugins { id("com.android.application") version "8.5.2"; id("org.jetbrains.kotlin.android") version "1.9.24" }
           android { namespace = "com.mma.pulse"; compileSdk = 35
-            defaultConfig { applicationId = "com.mma.pulse.pro"; minSdk = 26; targetSdk = 35; versionCode = 50; versionName = "22.0-UFC" }
+            defaultConfig { applicationId = "com.mma.pulse.pro"; minSdk = 26; targetSdk = 35; versionCode = 55; versionName = "23.0-Full" }
             buildFeatures { compose = true }; composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
             compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
             kotlinOptions { jvmTarget = "17" } }
@@ -43,6 +43,13 @@ jobs:
             implementation("androidx.compose.ui:ui:1.7.6"); implementation("androidx.compose.material3:material3:1.3.1")
             implementation("androidx.compose.foundation:foundation:1.7.6"); implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
             implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0") }
+          EOF
+          cat << 'EOF' > app/src/main/res/drawable/ic_mma_pulse.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+          <path android:fillColor="#080810" android:pathData="M0,0h108v108h-108z"/>
+          <path android:fillColor="#181224" android:strokeColor="#FF1744" android:strokeWidth="3.5" android:pathData="M36,12 L72,12 L96,36 L96,72 L72,96 L36,96 L12,72 L12,36 Z"/>
+          </vector>
           EOF
           cat << 'EOF' > app/src/main/AndroidManifest.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -75,6 +82,7 @@ jobs:
           import androidx.compose.ui.graphics.drawscope.Stroke
           import androidx.compose.ui.layout.ContentScale
           import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.text.style.TextAlign
           import androidx.compose.ui.unit.dp
           import androidx.compose.ui.unit.sp
           import kotlinx.coroutines.*
@@ -84,7 +92,7 @@ jobs:
           import java.net.URLEncoder
           data class Bout(val a:String,val b:String,val oa:String="",val ob:String="",val round:Int=0,val time:String="")
           data class Event(val name:String,val date:String,val venue:String,val bouts:List<Bout>,val done:Boolean,val live:Boolean=false)
-          data class RankedFighter(val rank:Int,val name:String,val record:String,val weightClass:String)
+          data class RankedFighter(val rank:Int,val name:String,val record:String)
           data class RankingGroup(val name:String,val fighters:List<RankedFighter>)
           object Repo {
             var events by mutableStateOf(listOf<Event>())
@@ -172,7 +180,7 @@ jobs:
                           val athlete = r.optJSONObject("athlete")
                           val name = athlete?.optString("displayName") ?: ""
                           val record = athlete?.optJSONArray("records")?.optJSONObject(0)?.optString("summary") ?: ""
-                          fighters.add(RankedFighter(r.optInt("current"), name, record, gName))
+                          fighters.add(RankedFighter(r.optInt("current"), name, record))
                         }
                       }
                       if(fighters.isNotEmpty()) groups.add(RankingGroup(gName, fighters))
@@ -191,7 +199,7 @@ jobs:
             }
           }
           object Faces {
-            private val cache = object : LruCache<String, ImageBitmap>(300) {}
+            private val cache = object : LruCache<String, ImageBitmap>(400) {}
             suspend fun load(name:String): ImageBitmap? = withContext(Dispatchers.IO) {
               val k = name.trim().lowercase()
               cache.get(k)?.let { return@withContext it }
@@ -209,23 +217,23 @@ jobs:
             val infinite = rememberInfiniteTransition()
             val pulse by infinite.animateFloat(0f, 1f, infiniteRepeatable(tween(1600, easing = LinearEasing), RepeatMode.Restart))
             val chase by infinite.animateFloat(0f, 1f, infiniteRepeatable(tween(2200, easing = LinearEasing), RepeatMode.Restart))
-            Canvas(Modifier.size(48.dp)) {
+            Canvas(Modifier.size(52.dp)) {
               val w = size.width; val h = size.height
               val path = Path().apply {
                 moveTo(0f, h*0.5f)
-                lineTo(w*0.15f, h*0.5f)
-                lineTo(w*0.22f, h*0.25f)
-                lineTo(w*0.32f, h*0.75f)
-                lineTo(w*0.42f, h*0.15f)
-                lineTo(w*0.52f, h*0.85f)
-                lineTo(w*0.62f, h*0.35f)
-                lineTo(w*0.75f, h*0.5f)
+                lineTo(w*0.12f, h*0.5f)
+                lineTo(w*0.20f, h*0.22f)
+                lineTo(w*0.30f, h*0.78f)
+                lineTo(w*0.40f, h*0.12f)
+                lineTo(w*0.50f, h*0.88f)
+                lineTo(w*0.60f, h*0.32f)
+                lineTo(w*0.72f, h*0.5f)
                 lineTo(w, h*0.5f)
               }
-              drawPath(path, Color(0xFFFF1744), style = Stroke(width = 2.5f, cap = StrokeCap.Round))
+              drawPath(path, Color(0xFFFF1744), style = Stroke(width = 2.8f, cap = StrokeCap.Round, join = StrokeJoin.Round))
               val chaseX = chase * w
-              drawCircle(Color.White, radius = 3.5f, center = Offset(chaseX, h*0.5f))
-              drawCircle(Color(0xFFFF1744).copy(alpha = 0.6f * (1f - pulse)), radius = 6f * pulse, center = Offset(w*0.5f, h*0.5f))
+              drawCircle(Color.White, radius = 4f, center = Offset(chaseX, h*0.5f))
+              drawCircle(Color(0xFFFF1744).copy(alpha = 0.55f * (1f - pulse)), radius = 7f * pulse, center = Offset(w*0.5f, h*0.5f))
             }
           }
           class MainActivity: ComponentActivity() {
@@ -235,20 +243,25 @@ jobs:
             var tab by remember { mutableStateOf(0) }
             var selected by remember { mutableStateOf<Event?>(null) }
             val tabs = listOf("Live","Cards","Roster","Predict")
-            LaunchedEffect(Unit){ Repo.sync(); while(true){ delay(45000); Repo.sync() } }
+            LaunchedEffect(Unit){ Repo.sync(); while(true){ delay(40000); Repo.sync() } }
             Scaffold(containerColor=Color(0xFF080810), topBar={
-              Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment=Alignment.CenterVertically) {
-                if(selected != null) {
-                  TextButton(onClick={ selected = null }) { Text("← Back", color=Color(0xFFFF1744)) }
-                  Spacer(Modifier.width(8.dp))
-                  Text(selected!!.name, color=Color.White, fontWeight=FontWeight.Bold, maxLines=1)
-                } else {
-                  ECGLogo()
-                  Spacer(Modifier.width(8.dp))
-                  Text("MMA PULSE", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=18.sp)
-                  Spacer(Modifier.weight(1f))
-                  TextButton(onClick={ Repo.sync() }) { Text("Sync", color=Color(0xFFFF1744)) }
+              Column {
+                Row(Modifier.fillMaxWidth().padding(horizontal=12.dp, vertical=8.dp), verticalAlignment=Alignment.CenterVertically) {
+                  if(selected != null) {
+                    TextButton(onClick={ selected = null }) { Text("← Back", color=Color(0xFFFF1744)) }
+                    Spacer(Modifier.width(6.dp))
+                    Text(selected!!.name, color=Color.White, fontWeight=FontWeight.Bold, maxLines=1, fontSize=15.sp)
+                  } else {
+                    ECGLogo()
+                    Spacer(Modifier.width(8.dp))
+                    Text("MMA PULSE", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp)
+                    Spacer(Modifier.weight(1f))
+                    Button(onClick={ Repo.sync() }, colors=ButtonDefaults.buttonColors(containerColor=Color(0xFFFF1744)), shape=RoundedCornerShape(20.dp)) {
+                      Text("Sync", color=Color.White, fontSize=13.sp)
+                    }
+                  }
                 }
+                HorizontalDivider(color=Color(0xFF2A2A38), thickness=1.dp)
               }
             }, bottomBar={
               if(selected == null) NavigationBar(containerColor=Color(0xFF12121A)) {
@@ -271,53 +284,65 @@ jobs:
             LaunchedEffect(name) { img = Faces.load(name) }
             if(img != null) Image(img!!, null, Modifier.size(size.dp).clip(CircleShape), contentScale=ContentScale.Crop)
             else Box(Modifier.size(size.dp).clip(CircleShape).background(Color(0xFF2A2A38)), contentAlignment=Alignment.Center) {
-              Text(name.take(1), color=Color.White, fontWeight=FontWeight.Bold)
+              Text(name.take(1), color=Color.White, fontWeight=FontWeight.Bold, fontSize=(size/3).sp)
             }
           }
           @Composable fun Live() {
             val live = Repo.events.filter { it.live }
-            val next = Repo.events.firstOrNull { !it.done && !it.live }
             Column(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-              Text("LIVE", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp)
-              if(live.isEmpty()) Text("No live UFC fights right now", color=Color.Gray, modifier=Modifier.padding(top=8.dp))
+              Text("LIVE", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp)
+              if(live.isEmpty()) {
+                Text("No live UFC fights right now", color=Color.Gray, modifier=Modifier.padding(top=12.dp))
+                val next = Repo.events.firstOrNull { !it.done }
+                if(next != null) {
+                  Spacer(Modifier.height(16.dp))
+                  Text("NEXT", color=Color.White, fontWeight=FontWeight.Bold, fontSize=16.sp)
+                  Text(next.name, color=Color.Gray)
+                }
+              }
               live.forEach { ev ->
-                Text(ev.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=16.sp, modifier=Modifier.padding(top=12.dp))
+                Text(ev.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=17.sp, modifier=Modifier.padding(top=14.dp))
+                Text(ev.venue, color=Color.Gray, fontSize=12.sp)
                 ev.bouts.forEach { b ->
                   val (wa,wb) = AI.analyze(b.oa,b.ob)
-                  Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(16.dp)) {
-                    Column(Modifier.padding(14.dp)) {
+                  Card(Modifier.fillMaxWidth().padding(vertical=8.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(18.dp)) {
+                    Column(Modifier.padding(16.dp)) {
                       Row(verticalAlignment=Alignment.CenterVertically) {
-                        FighterFace(b.a)
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) { Text(b.a, color=Color.White, fontWeight=FontWeight.Bold); Text("$wa%", color=Color(0xFFFF1744)) }
-                        Text("VS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold)
-                        Column(Modifier.weight(1f), horizontalAlignment=Alignment.End) { Text(b.b, color=Color.White, fontWeight=FontWeight.Bold); Text("$wb%", color=Color(0xFF00E676)) }
-                        Spacer(Modifier.width(10.dp))
-                        FighterFace(b.b)
+                        FighterFace(b.a, 64)
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                          Text(b.a, color=Color.White, fontWeight=FontWeight.Bold, fontSize=15.sp)
+                          Text("$wa%", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold)
+                        }
+                        Text("VS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=16.sp)
+                        Column(Modifier.weight(1f), horizontalAlignment=Alignment.End) {
+                          Text(b.b, color=Color.White, fontWeight=FontWeight.Bold, fontSize=15.sp)
+                          Text("$wb%", color=Color(0xFF00E676), fontWeight=FontWeight.Bold)
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        FighterFace(b.b, 64)
                       }
-                      if(b.round > 0) Text("Round ${b.round} • ${b.time}", color=Color(0xFF00E676), fontSize=13.sp, modifier=Modifier.padding(top=6.dp))
-                      LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(7.dp).padding(top=6.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
-                      if(b.oa.isNotEmpty()) Text("Live Odds  ${b.oa} / ${b.ob}", color=Color(0xFFFFD700), fontSize=12.sp, modifier=Modifier.padding(top=4.dp))
+                      if(b.round > 0) Text("Round ${b.round}  •  ${b.time}", color=Color(0xFF00E676), fontSize=14.sp, modifier=Modifier.padding(top=8.dp))
+                      LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(8.dp).padding(top=8.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
+                      if(b.oa.isNotEmpty()) Text("Live Odds   ${b.oa}  /  ${b.ob}", color=Color(0xFFFFD700), fontSize=13.sp, modifier=Modifier.padding(top=6.dp))
                     }
                   }
                 }
               }
-              if(next != null) {
-                Spacer(Modifier.height(16.dp))
-                Text("NEXT", color=Color.White, fontWeight=FontWeight.Bold, fontSize=18.sp)
-                Text(next.name, color=Color.Gray)
-              }
             }
-          }
-          @Composable fun Cards(onSelect:(Event)->Unit) {
+          }@Composable fun Cards(onSelect:(Event)->Unit) {
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-              item { Text("UPCOMING UFC CARDS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              item { Text("UPCOMING UFC CARDS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp) }
               items(Repo.events.filter { !it.done }) { e ->
-                Card(Modifier.fillMaxWidth().padding(vertical=6.dp).clickable { onSelect(e) }, colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
-                  Column(Modifier.padding(12.dp)) {
-                    Text(e.name, color=Color.White, fontWeight=FontWeight.Bold)
-                    Text("${e.date.take(10)} • ${e.venue}", color=Color.Gray, fontSize=12.sp)
-                    Text("${e.bouts.size} bouts", color=Color(0xFF00E676), fontSize=12.sp)
+                Card(Modifier.fillMaxWidth().padding(vertical=8.dp).clickable { onSelect(e) }, colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(16.dp)) {
+                  Column(Modifier.padding(16.dp)) {
+                    Text(e.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=16.sp)
+                    Text("${e.date.take(10)}  •  ${e.venue}", color=Color.Gray, fontSize=13.sp)
+                    Text("${e.bouts.size} bouts", color=Color(0xFF00E676), fontSize=13.sp, modifier=Modifier.padding(top=4.dp))
+                    if(e.bouts.isNotEmpty()) {
+                      val main = e.bouts.first()
+                      Text("${main.a} vs ${main.b}", color=Color(0xFFFFD700), fontSize=13.sp, modifier=Modifier.padding(top=4.dp))
+                    }
                   }
                 }
               }
@@ -326,73 +351,80 @@ jobs:
           @Composable fun EventDetail(event: Event) {
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
               item {
-                Text(event.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=18.sp)
-                Text("${event.date.take(10)} • ${event.venue}", color=Color.Gray, fontSize=13.sp)
-                Spacer(Modifier.height(8.dp))
+                Text(event.name, color=Color.White, fontWeight=FontWeight.Bold, fontSize=20.sp)
+                Text("${event.date.take(10)}  •  ${event.venue}", color=Color.Gray, fontSize=14.sp)
+                Spacer(Modifier.height(12.dp))
               }
               items(event.bouts) { b ->
                 val (wa,wb) = AI.analyze(b.oa,b.ob)
-                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
-                  Column(Modifier.padding(12.dp)) {
+                Card(Modifier.fillMaxWidth().padding(vertical=8.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(16.dp)) {
+                  Column(Modifier.padding(14.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
-                      FighterFace(b.a, 48)
-                      Spacer(Modifier.width(8.dp))
-                      Column(Modifier.weight(1f)) { Text(b.a, color=Color.White, fontWeight=FontWeight.Bold, fontSize=14.sp); Text("$wa%", color=Color(0xFFFF1744)) }
-                      Text("VS", color=Color(0xFFFF1744))
-                      Column(Modifier.weight(1f), horizontalAlignment=Alignment.End) { Text(b.b, color=Color.White, fontWeight=FontWeight.Bold, fontSize=14.sp); Text("$wb%", color=Color(0xFF00E676)) }
-                      Spacer(Modifier.width(8.dp))
-                      FighterFace(b.b, 48)
+                      FighterFace(b.a, 56)
+                      Spacer(Modifier.width(10.dp))
+                      Column(Modifier.weight(1f)) {
+                        Text(b.a, color=Color.White, fontWeight=FontWeight.Bold)
+                        Text("$wa%", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold)
+                      }
+                      Text("VS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold)
+                      Column(Modifier.weight(1f), horizontalAlignment=Alignment.End) {
+                        Text(b.b, color=Color.White, fontWeight=FontWeight.Bold)
+                        Text("$wb%", color=Color(0xFF00E676), fontWeight=FontWeight.Bold)
+                      }
+                      Spacer(Modifier.width(10.dp))
+                      FighterFace(b.b, 56)
                     }
-                    LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(6.dp).padding(top=6.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
-                    if(b.oa.isNotEmpty()) Text("${b.a}: ${b.oa}   |   ${b.b}: ${b.ob}", color=Color(0xFFFFD700), fontSize=12.sp, modifier=Modifier.padding(top=4.dp))
+                    Spacer(Modifier.height(8.dp))
+                    LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(7.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
+                    if(b.oa.isNotEmpty()) {
+                      Text("${b.a}: ${b.oa}", color=Color(0xFFFFD700), fontSize=13.sp, modifier=Modifier.padding(top=6.dp))
+                      Text("${b.b}: ${b.ob}", color=Color(0xFFFFD700), fontSize=13.sp)
+                    }
                   }
                 }
               }
             }
-          }@Composable fun Roster() {
+          }
+          @Composable fun Roster() {
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-              item { Text("UFC RANKINGS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              item { Text("UFC RANKINGS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp) }
               items(Repo.rankings) { group ->
-                Text(group.name, color=Color(0xFF00E676), fontWeight=FontWeight.Bold, fontSize=16.sp, modifier=Modifier.padding(top=12.dp, bottom=6.dp))
+                Text(group.name, color=Color(0xFF00E676), fontWeight=FontWeight.Bold, fontSize=17.sp, modifier=Modifier.padding(top=16.dp, bottom=8.dp))
                 group.fighters.forEach { f ->
-                  Row(Modifier.fillMaxWidth().padding(vertical=4.dp), verticalAlignment=Alignment.CenterVertically) {
-                    Text("${f.rank}", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, modifier=Modifier.width(28.dp))
-                    FighterFace(f.name, 40)
-                    Spacer(Modifier.width(10.dp))
+                  Row(Modifier.fillMaxWidth().padding(vertical=6.dp), verticalAlignment=Alignment.CenterVertically) {
+                    Text("${f.rank}", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, modifier=Modifier.width(32.dp), fontSize=16.sp)
+                    FighterFace(f.name, 48)
+                    Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                      Text(f.name, color=Color.White, fontWeight=FontWeight.Medium)
+                      Text(f.name, color=Color.White, fontWeight=FontWeight.Medium, fontSize=15.sp)
                       Text(f.record, color=Color.Gray, fontSize=12.sp)
                     }
                   }
                 }
               }
             }
-          }
-          @Composable fun Predict() {
+          }@Composable fun Predict() {
             val upcoming = Repo.events.filter { !it.done }.flatMap { it.bouts }
             LazyColumn(Modifier.fillMaxSize().background(Color(0xFF080810)).padding(16.dp)) {
-              item { Text("PULSE AI PREDICTIONS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=20.sp) }
+              item { Text("PULSE AI PREDICTIONS", color=Color(0xFFFF1744), fontWeight=FontWeight.Bold, fontSize=22.sp) }
               items(upcoming) { b ->
                 val (wa,wb) = AI.analyze(b.oa,b.ob)
-                Card(Modifier.fillMaxWidth().padding(vertical=6.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(14.dp)) {
-                  Column(Modifier.padding(12.dp)) {
+                Card(Modifier.fillMaxWidth().padding(vertical=8.dp), colors=CardDefaults.cardColors(containerColor=Color(0xFF1A1A28)), shape=RoundedCornerShape(16.dp)) {
+                  Column(Modifier.padding(14.dp)) {
                     Row(verticalAlignment=Alignment.CenterVertically) {
-                      FighterFace(b.a, 44)
-                      Spacer(Modifier.width(8.dp))
-                      Text("${b.a} vs ${b.b}", color=Color.White, fontWeight=FontWeight.Bold, modifier=Modifier.weight(1f))
-                      FighterFace(b.b, 44)
+                      FighterFace(b.a, 52)
+                      Spacer(Modifier.width(10.dp))
+                      Text("${b.a} vs ${b.b}", color=Color.White, fontWeight=FontWeight.Bold, modifier=Modifier.weight(1f), fontSize=14.sp)
+                      FighterFace(b.b, 52)
                     }
-                    Spacer(Modifier.height(6.dp))
-                    Text("${b.a}: $wa%   |   ${b.b}: $wb%", color=Color(0xFF00E676))
-                    LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(6.dp).padding(top=4.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
-                    if(b.oa.isNotEmpty()) Text("Odds ${b.oa} / ${b.ob}", color=Color(0xFFFFD700), fontSize=12.sp, modifier=Modifier.padding(top=4.dp))
+                    Spacer(Modifier.height(8.dp))
+                    Text("${b.a}: $wa%    |    ${b.b}: $wb%", color=Color(0xFF00E676), fontWeight=FontWeight.Medium)
+                    LinearProgressIndicator(progress={wa/100f}, modifier=Modifier.fillMaxWidth().height(7.dp).padding(top=6.dp), color=Color(0xFFFF1744), trackColor=Color(0xFF00E676))
+                    if(b.oa.isNotEmpty()) Text("Odds  ${b.oa}  /  ${b.ob}", color=Color(0xFFFFD700), fontSize=13.sp, modifier=Modifier.padding(top=6.dp))
                   }
                 }
               }
             }
-          }
-          @Composable fun Footer() {
-            Text("© 2026 MMA Pulse", color=Color.Gray, fontSize=11.sp, modifier=Modifier.fillMaxWidth().padding(8.dp), textAlign=androidx.compose.ui.text.style.TextAlign.Center)
           }
           EOF
       - name: Build APK
