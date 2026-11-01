@@ -56,11 +56,11 @@ jobs:
               namespace = "com.ufc.pulse"
               compileSdk = 35
               defaultConfig {
-                  applicationId = "com.ufc.pulse"
+                  applicationId = "com.ufc.pulse.pro"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 10
-                  versionName = "10.0-Stable"
+                  versionCode = 11
+                  versionName = "11.0-Fold8-Stable"
               }
               buildFeatures { compose = true }
               composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
@@ -77,7 +77,6 @@ jobs:
               implementation("androidx.compose.foundation:foundation:1.7.6")
               implementation("androidx.compose.material3:material3:1.3.1")
               implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
-              implementation("androidx.work:work-runtime-ktx:2.10.0")
               implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
           }
           EOF
@@ -139,7 +138,9 @@ jobs:
           import androidx.compose.runtime.*
           import androidx.compose.ui.Alignment
           import androidx.compose.ui.Modifier
+          import androidx.compose.ui.draw.clip
           import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.platform.LocalConfiguration
           import androidx.compose.ui.platform.LocalContext
           import androidx.compose.ui.text.font.FontWeight
           import androidx.compose.ui.text.style.TextOverflow
@@ -148,19 +149,16 @@ jobs:
           import androidx.core.app.ActivityCompat
           import androidx.core.app.NotificationCompat
           import androidx.core.content.ContextCompat
-          import androidx.work.*
           import kotlinx.coroutines.*
           import org.json.JSONObject
           import org.xmlpull.v1.XmlPullParser
           import java.io.StringReader
           import java.net.HttpURLConnection
           import java.net.URL
-          import java.time.LocalDate
           import java.time.ZoneId
           import java.time.ZonedDateTime
           import java.time.format.DateTimeFormatter
           import java.util.Locale
-          import java.util.concurrent.TimeUnit
 
           data class NewsItem(val title: String, val source: String, val pubDate: String, val link: String, val summary: String)
           data class BoutDetail(val boutName: String, val odds: String, val prediction: String)
@@ -265,7 +263,7 @@ jobs:
               private fun httpGet(u: String): String = try {
                   val c = (URL(u).openConnection() as HttpURLConnection).apply {
                       connectTimeout = 6000; readTimeout = 6000
-                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 16; SM-F976B)")
+                      setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 17; SM-F971B)")
                   }
                   if (c.responseCode in 200..299) c.inputStream.bufferedReader().use { it.readText() } else ""
               } catch (_: Throwable) { "" }
@@ -283,6 +281,26 @@ jobs:
                           if (h.isNotBlank()) out.add(NewsItem(h, "ESPN UFC", p, l, d))
                       }
                   } catch (_: Throwable) {}
+                  try {
+                      val xml = httpGet("https://www.sherdog.com/rss/news.xml")
+                      if (xml.isNotBlank()) {
+                          val xp = Xml.newPullParser().apply { setInput(StringReader(xml)) }
+                          var ev = xp.eventType; var inItem = false; var t = ""; var l = ""; var d = ""
+                          while (ev != XmlPullParser.END_DOCUMENT) {
+                              val n = xp.name ?: ""
+                              if (ev == XmlPullParser.START_TAG) {
+                                  if (n.equals("item", true)) { inItem = true; t = ""; l = ""; d = "" }
+                                  else if (inItem && n.equals("title", true)) t = try { xp.nextText().trim() } catch (_: Throwable) { "" }
+                                  else if (inItem && n.equals("link", true)) l = try { xp.nextText().trim() } catch (_: Throwable) { "" }
+                                  else if (inItem && n.equals("description", true)) d = try { xp.nextText().replace(Regex("<.*?>"), "").trim() } catch (_: Throwable) { "" }
+                              } else if (ev == XmlPullParser.END_TAG && n.equals("item", true) && inItem) {
+                                  if (t.isNotBlank()) out.add(NewsItem(t, "Sherdog RSS", "Latest", l.ifBlank { "https://www.sherdog.com" }, d))
+                                  inItem = false
+                              }
+                              ev = xp.next()
+                          }
+                      }
+                  } catch (_: Throwable) {}
                   if (out.isEmpty()) listOf(
                       NewsItem("UFC Fight Night Live Results, Odds & Round Predictions", "UFC Pulse", "Live Now", "https://www.ufc.com", "Live round-by-round octagon tracking and fighter odds."),
                       NewsItem("UFC 334 & UFC 335 Title Fight Cards Official", "UFC Pulse", "Breaking", "https://www.ufc.com", "Full PPV and Fight Night schedules converted to local GMT/IST time.")
@@ -290,24 +308,9 @@ jobs:
               }
           }
 
-          class UfcRssWorker(c: Context, p: WorkerParameters) : CoroutineWorker(c, p) {
-              override suspend fun doWork(): Result = try {
-                  val list = UfcData.fetchNews()
-                  if (list.isNotEmpty()) {
-                      val prefs = applicationContext.getSharedPreferences("ufc_v10", Context.MODE_PRIVATE)
-                      val top = list.first()
-                      if (top.title != prefs.getString("last", "")) {
-                          prefs.edit().putString("last", top.title).apply()
-                          Notifier.sendRss(applicationContext, top.title, top.source, top.link)
-                      }
-                  }
-                  Result.success()
-              } catch (_: Throwable) { Result.success() }
-          }
-
           object Notifier {
-              private const val RSS_CH = "ufc_rss_v10"
-              private const val BAR_CH = "ufc_bar_v10"
+              private const val RSS_CH = "ufc_rss_v11"
+              private const val BAR_CH = "ufc_bar_v11"
 
               fun init(ctx: Context) {
                   try {
@@ -327,22 +330,23 @@ jobs:
                       if (!canNotify(ctx)) return
                       init(ctx)
                       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      val pi = PendingIntent.getActivity(ctx, title.hashCode(), Intent(Intent.ACTION_VIEW, Uri.parse(if (url.startsWith("http")) url else "https://www.ufc.com")), PendingIntent.FLAG_IMMUTABLE)
+                      val id = (title.hashCode() and 0x7FFFFFFF)
+                      val pi = PendingIntent.getActivity(ctx, id, Intent(Intent.ACTION_VIEW, Uri.parse(if (url.startsWith("http")) url else "https://www.ufc.com")), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                       val n = NotificationCompat.Builder(ctx, RSS_CH)
                           .setSmallIcon(android.R.drawable.ic_popup_reminder)
                           .setContentTitle("UFC News • $src").setContentText(title)
                           .setPriority(NotificationCompat.PRIORITY_HIGH).setContentIntent(pi).setAutoCancel(true).build()
-                      nm.notify(title.hashCode(), n)
+                      nm.notify(id, n)
                   } catch (_: Throwable) {}
               }
 
               fun updateLiveBar(ctx: Context, m: LiveMatchState, active: Boolean) {
                   try {
                       val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      if (!active) { nm.cancel(10001); return }
+                      if (!active) { nm.cancel(11001); return }
                       if (!canNotify(ctx)) return
                       init(ctx)
-                      val pi = PendingIntent.getActivity(ctx, 10001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE)
+                      val pi = PendingIntent.getActivity(ctx, 11001, Intent(ctx, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
                       val title = "R${m.round} (${m.time}) • ${m.fighterA} (${m.oddsA}) vs ${m.fighterB} (${m.oddsB})"
                       val body = "${m.prediction} | ${m.status}"
                       val n = NotificationCompat.Builder(ctx, BAR_CH)
@@ -353,7 +357,7 @@ jobs:
                           .setOngoing(true).setOnlyAlertOnce(true)
                           .setProgress(100, m.probA.coerceIn(0, 100), false)
                           .setContentIntent(pi).build()
-                      nm.notify(10001, n)
+                      nm.notify(11001, n)
                   } catch (_: Throwable) {}
               }
           }
@@ -366,8 +370,6 @@ jobs:
                       if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                           ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
                       }
-                      val req = PeriodicWorkRequestBuilder<UfcRssWorker>(15, TimeUnit.MINUTES).build()
-                      WorkManager.getInstance(this).enqueueUniquePeriodicWork("ufc_rss_v10", ExistingPeriodicWorkPolicy.KEEP, req)
                   } catch (_: Throwable) {}
                   setContent {
                       MaterialTheme(darkColorScheme(primary = Color(0xFFD20A0A), background = Color(0xFF0A0A0C), surface = Color(0xFF16161B))) {
@@ -389,6 +391,7 @@ jobs:
           fun UfcApp() {
               val ctx = LocalContext.current
               val scope = rememberCoroutineScope()
+              val isFold8 = LocalConfiguration.current.screenWidthDp >= 600
               var tab by remember { mutableIntStateOf(0) }
               var threePane by remember { mutableStateOf(false) }
               var pinBar by remember { mutableStateOf(true) }
@@ -402,73 +405,70 @@ jobs:
               fun sync() {
                   loading = true
                   scope.launch {
-                      news = UfcData.fetchNews()
+                      val fetched = UfcData.fetchNews()
+                      news = fetched
                       loading = false
                       Notifier.updateLiveBar(ctx, live, pinBar)
                   }
               }
               LaunchedEffect(Unit) { sync() }
 
-              BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xFF0A0A0C))) {
-                  val isFold8 = maxWidth >= 600.dp
-                  Column(Modifier.fillMaxSize()) {
-                      Row(Modifier.fillMaxWidth().background(Color(0xFF121216)).padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                          Column(Modifier.weight(1f)) {
-                              Row(verticalAlignment = Alignment.CenterVertically) {
-                                  Text("UFC PULSE PRO", color = Color(0xFFD20A0A), fontSize = 18.sp, fontWeight = FontWeight.Black)
-                                  Spacer(Modifier.width(8.dp))
-                                  Text(if (isFold8) "FOLD 8 4:3" else "COVER", color = Color(0xFFFFD700), fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                              }
-                              Text("Live Tracker • Odds • Predictor • GMT/IST", color = Color.Gray, fontSize = 11.sp)
+              Column(Modifier.fillMaxSize().background(Color(0xFF0A0A0C))) {
+                  Row(Modifier.fillMaxWidth().background(Color(0xFF121216)).padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                      Column(Modifier.weight(1f)) {
+                          Row(verticalAlignment = Alignment.CenterVertically) {
+                              Text("UFC PULSE PRO", color = Color(0xFFD20A0A), fontSize = 18.sp, fontWeight = FontWeight.Black)
+                              Spacer(Modifier.width(8.dp))
+                              Text(if (isFold8) "FOLD 8 4:3" else "COVER", color = Color(0xFFFFD700), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                           }
-                          Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                              if (isFold8) {
-                                  Button(onClick = { threePane = !threePane }, colors = ButtonDefaults.buttonColors(containerColor = if (threePane) Color(0xFFFFD700) else Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
-                                      Text(if (threePane) "3-Pane: ON" else "3-Pane", fontSize = 11.sp, color = if (threePane) Color.Black else Color.White, fontWeight = FontWeight.Bold)
-                                  }
+                          Text("Live Tracker • Odds • Predictor • GMT/IST", color = Color.Gray, fontSize = 11.sp)
+                      }
+                      Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                          if (isFold8) {
+                              Button(onClick = { threePane = !threePane }, colors = ButtonDefaults.buttonColors(containerColor = if (threePane) Color(0xFFFFD700) else Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
+                                  Text(if (threePane) "3-Pane: ON" else "3-Pane", fontSize = 11.sp, color = if (threePane) Color.Black else Color.White, fontWeight = FontWeight.Bold)
                               }
-                              Button(onClick = { Notifier.sendRss(ctx, news.firstOrNull()?.title ?: "UFC Fight Night Live Update", "UFC RSS", "https://www.ufc.com") }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
-                                  Text("Test Alert", fontSize = 11.sp, color = Color.White)
-                              }
-                              Button(onClick = { sync() }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD20A0A)), contentPadding = PaddingValues(10.dp, 4.dp)) {
-                                  Text("Sync", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
-                              }
+                          }
+                          Button(onClick = { Notifier.sendRss(ctx, news.firstOrNull()?.title ?: "UFC Fight Night Live Update", "UFC RSS", "https://www.ufc.com") }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF262630)), contentPadding = PaddingValues(10.dp, 4.dp)) {
+                              Text("Test Alert", fontSize = 11.sp, color = Color.White)
+                          }
+                          Button(onClick = { sync() }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD20A0A)), contentPadding = PaddingValues(10.dp, 4.dp)) {
+                              Text("Sync", fontSize = 11.sp, color = Color.White, fontWeight = FontWeight.Bold)
                           }
                       }
-                      if (loading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = Color(0xFFD20A0A))
-                      if (!(isFold8 && threePane)) {
-                          TabRow(selectedTabIndex = tab, containerColor = Color(0xFF121216), contentColor = Color(0xFFD20A0A)) {
-                              Tab(tab == 0, { tab = 0 }, text = { Text("Live Tracker", fontSize = 12.sp) })
-                              Tab(tab == 1, { tab = 1 }, text = { Text("RSS (${news.size})", fontSize = 12.sp) })
-                              Tab(tab == 2, { tab = 2 }, text = { Text("Events", fontSize = 12.sp) })
-                              Tab(tab == 3, { tab = 3 }, text = { Text("Roster", fontSize = 12.sp) })
-                          }
+                  }
+                  if (!(isFold8 && threePane)) {
+                      TabRow(selectedTabIndex = tab, containerColor = Color(0xFF121216), contentColor = Color(0xFFD20A0A)) {
+                          Tab(tab == 0, { tab = 0 }, text = { Text("Live Tracker", fontSize = 12.sp) })
+                          Tab(tab == 1, { tab = 1 }, text = { Text("RSS (${news.size})", fontSize = 12.sp) })
+                          Tab(tab == 2, { tab = 2 }, text = { Text("Events", fontSize = 12.sp) })
+                          Tab(tab == 3, { tab = 3 }, text = { Text("Roster", fontSize = 12.sp) })
                       }
-                      if (isFold8 && threePane) {
-                          Row(Modifier.fillMaxSize().padding(12.dp), Arrangement.spacedBy(14.dp)) {
-                              Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                              Box(Modifier.weight(1f)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
-                              Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
-                          }
-                      } else {
-                          when (tab) {
-                              0 -> if (isFold8) {
-                                  Row(Modifier.fillMaxSize().padding(14.dp), Arrangement.spacedBy(16.dp)) {
-                                      Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                                      Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
-                                  }
-                              } else Box(Modifier.fillMaxSize().padding(12.dp)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
-                              1 -> Box(Modifier.fillMaxSize().padding(12.dp)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
-                              2 -> Column(Modifier.fillMaxSize().padding(12.dp)) {
-                                  Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
-                                      listOf("ALL", "PPV", "FIGHT NIGHT").forEach { f ->
-                                          Button(onClick = { evFilter = f }, colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFD20A0A) else Color(0xFF22222A))) { Text(f, fontSize = 12.sp, color = Color.White) }
-                                      }
-                                  }
-                                  EventsPane(UfcData.seedEvents, evFilter)
+                  }
+                  if (isFold8 && threePane) {
+                      Row(Modifier.fillMaxSize().padding(12.dp), Arrangement.spacedBy(14.dp)) {
+                          Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
+                          Box(Modifier.weight(1f)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
+                          Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
+                      }
+                  } else {
+                      when (tab) {
+                          0 -> if (isFold8) {
+                              Row(Modifier.fillMaxSize().padding(14.dp), Arrangement.spacedBy(16.dp)) {
+                                  Box(Modifier.weight(1f)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
+                                  Box(Modifier.weight(1f)) { EventsPane(UfcData.seedEvents, "ALL") }
                               }
-                              3 -> Box(Modifier.fillMaxSize().padding(12.dp)) { RosterPane(UfcData.seedRoster, search, { search = it }, divFilter, { divFilter = it }, if (isFold8) 2 else 1) }
+                          } else Box(Modifier.fillMaxSize().padding(12.dp)) { LivePane(live, pinBar, { pinBar = !pinBar; Notifier.updateLiveBar(ctx, live, pinBar) }, { live = nextRound(live); Notifier.updateLiveBar(ctx, live, pinBar) }) }
+                          1 -> Box(Modifier.fillMaxSize().padding(12.dp)) { NewsPane(news) { openUrlSafely(ctx, it.link) } }
+                          2 -> Column(Modifier.fillMaxSize().padding(12.dp)) {
+                              Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+                                  listOf("ALL", "PPV", "FIGHT NIGHT").forEach { f ->
+                                      Button(onClick = { evFilter = f }, colors = ButtonDefaults.buttonColors(containerColor = if (evFilter == f) Color(0xFFD20A0A) else Color(0xFF22222A))) { Text(f, fontSize = 12.sp, color = Color.White) }
+                                  }
+                              }
+                              EventsPane(UfcData.seedEvents, evFilter)
                           }
+                          3 -> Box(Modifier.fillMaxSize().padding(12.dp)) { RosterPane(UfcData.seedRoster, search, { search = it }, divFilter, { divFilter = it }, if (isFold8) 2 else 1) }
                       }
                   }
               }
@@ -519,7 +519,10 @@ jobs:
                                   Text("${m.fighterB} (${m.probB}%)", color = Color(0xFF2196F3), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                               }
                               Spacer(Modifier.height(4.dp))
-                              LinearProgressIndicator(progress = { (m.probA / 100f).coerceIn(0.05f, 0.95f) }, modifier = Modifier.fillMaxWidth().height(10.dp), color = Color(0xFFD20A0A), trackColor = Color(0xFF2196F3))
+                              Row(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp))) {
+                                  Box(Modifier.weight(m.probA.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFFD20A0A)))
+                                  Box(Modifier.weight(m.probB.coerceAtLeast(5).toFloat()).fillMaxHeight().background(Color(0xFF2196F3)))
+                              }
                               Spacer(Modifier.height(12.dp))
                               Row(Modifier.fillMaxWidth().background(Color(0xFF1E1E26), RoundedCornerShape(8.dp)).padding(10.dp), Arrangement.SpaceBetween) {
                                   Text("Strikes: ${m.strikesA}", color = Color.White, fontSize = 12.sp)
@@ -530,7 +533,7 @@ jobs:
                               Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF20202A)), shape = RoundedCornerShape(8.dp)) {
                                   Column(Modifier.padding(12.dp)) {
                                       Text("LIVE RESULT PREDICTION AS FIGHT PLAYS OUT", color = Color(0xFF4CAF50), fontSize = 10.sp, fontWeight = FontWeight.Black)
-                                      Text(m.prediction, color = Color(0xFFwhite), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                      Text(m.prediction, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                       Text(m.status, color = Color(0xFFC0C0C8), fontSize = 12.sp)
                                   }
                               }
@@ -611,7 +614,7 @@ jobs:
                               Row(Modifier.fillMaxWidth().padding(12.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                                   Column(Modifier.weight(1f)) {
                                       Row(verticalAlignment = Alignment.CenterVertically) {
-                                          Text(f.name, color = Color(0xFFFFFFFF), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                          Text(f.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                                           if (f.isChamp) {
                                               Spacer(Modifier.width(6.dp))
                                               Text("CHAMP", color = Color(0xFFFFD700), fontSize = 9.sp, fontWeight = FontWeight.Black)
